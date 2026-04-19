@@ -1,7 +1,12 @@
-from core.client import NebulaBot
+import warnings
+# Bungkam peringatan versi Python dari Google agar terminal tetap bersih
+warnings.filterwarnings("ignore", category=FutureWarning, module="google.api_core")
+
 import uvloop
 from hydrogram import filters
 from hydrogram.handlers import MessageHandler, CallbackQueryHandler, InlineQueryHandler
+
+from core.client import NebulaBot
 from plugins.assistant import assistant_contact_handler, assistant_callback_handler
 from plugins._inline import assistant_inline_handler, help_callback_handler
 
@@ -21,4 +26,3 @@ if __name__ == "__main__":
 
     print("✨ \033[96mNebula Ready! Memulai sistem...\033[0m")
     bot.run()
-
