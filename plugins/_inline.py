@@ -50,13 +50,11 @@ async def help_callback_handler(client, callback_query: CallbackQuery):
     data = callback_query.data
     user_me = await client.parent.get_me()
     
-    # 1. Keamanan & Ack Instan (Menghilangkan loading di tombol)
     if callback_query.from_user.id != user_me.id:
         return await callback_query.answer("⚠️ Not Authorized.", show_alert=True)
     
-    await callback_query.answer() # Sinyal ack ke Telegram agar loading hilang
+    await callback_query.answer()
 
-    # 2. Logika Navigasi
     if data == "help_back":
         registry = client.parent.cmd_help
         help_text = "🌌 **Nebula — Control Center**\n\nSelect a category to see available commands."
@@ -69,11 +67,32 @@ async def help_callback_handler(client, callback_query: CallbackQuery):
     if data.startswith("help_mod_"):
         category = data.split("_")[2]
         
+        # Dashboard Interaktif untuk Modul Config
+        if category == "Config":
+            text = await client.parent.get_string("DASHBOARD_TEXT")
+            is_ad = await client.parent.db.get("anti_delete", True)
+            is_as = await client.parent.db.get("antispam", False)
+            lang = await client.parent.db.get("lang", "id")
+            
+            buttons = [
+                [
+                    InlineKeyboardButton(f"Anti-Delete: {'✅' if is_ad else '❌'}", callback_data="conf_anti_delete"),
+                    InlineKeyboardButton(f"Anti-Spam: {'✅' if is_as else '❌'}", callback_data="conf_antispam")
+                ],
+                [
+                    InlineKeyboardButton(f"Bahasa: {lang.upper()}", callback_data="conf_lang_switch")
+                ],
+                [
+                    InlineKeyboardButton("⬅️ Back to Menu", callback_data="help_back")
+                ]
+            ]
+            return await callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(buttons))
+
         if category == "Stats":
             import psutil
             cpu = psutil.cpu_percent()
             mem = psutil.virtual_memory().percent
-            text = f"📊 **Nebula Operational Stats**\n\n**Uptime:** `Active`\n**CPU:** `{cpu}%`\n**RAM:** `{mem}%`"
+            text = f"📊 **Nebula Operational Stats**\n\n**CPU:** `{cpu}%`\n**RAM:** `{mem}%`"
         else:
             cmds = client.parent.cmd_help.get(category, {})
             text = f"📂 **Module: {category}**\n\n"
