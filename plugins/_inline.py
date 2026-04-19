@@ -29,20 +29,31 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
         )
         markup = await get_help_markup(page=0)
         
-        # Tampilkan sebagai Foto untuk kesan Premium (Ultroid Style)
         # PENTING: Inline Photo memerlukan URL Publik, tidak bisa file lokal.
         photo_url = userbot.banner_url
         if not photo_url.startswith("http"):
             # Fallback ke URL publik jika banner_url adalah path lokal
             photo_url = "https://telegra.ph/file/0c976939988a8f6022ced.jpg"
 
+        # Tampilkan GANDA untuk stabilitas (Gaya Ultroid):
+        # 1. Hasil Foto (Dashboard Premium)
         results.append(
             InlineQueryResultPhoto(
                 photo_url=photo_url,
                 thumb_url=photo_url,
-                title="Nebula Help Menu",
+                title="Nebula Dashboard (Premium)",
                 caption=text,
                 reply_markup=markup
+            )
+        )
+        # 2. Hasil Artikel (Pasti Berhasil / Safe Mode)
+        results.append(
+            InlineQueryResultArticle(
+                title="Nebula Help Center (Safe Mode)",
+                description="Buka menu bantuan jika gambar gagal muncul.",
+                input_message_content=InputTextMessageContent(text),
+                reply_markup=markup,
+                thumb_url=photo_url
             )
         )
     else:

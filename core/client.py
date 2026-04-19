@@ -146,7 +146,7 @@ class NebulaBot(Client):
         local_path = os.path.join(ROOT_DIR, "resources", "banner.png")
         if os.path.exists(local_path):
             return local_path
-        # Default fallback
+        # Default fallback (Direct High-Speed Link)
         return "https://telegra.ph/file/0c976939988a8f6022ced.jpg"
 
     def _load_strings(self):
