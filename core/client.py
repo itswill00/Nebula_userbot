@@ -247,14 +247,39 @@ class NebulaBot(Client):
                 card_text,
                 buttons=buttons
             )
+
+            # 6. Tangkap File ID untuk Caching & Dynamic Banners (Phase 7 Shifting Cosmos)
+            banner_ids = []
             
-            # 6. Tangkap File ID untuk Caching (Phase 6 Sentinel)
+            # Tambahkan banner utama jika ada
             if msg and hasattr(msg, "photo") and msg.photo:
+                banner_ids.append(msg.photo.file_id)
                 await self.db.set("banner_file_id", msg.photo.file_id)
+
+            # Pindai folder banners untuk variasi tambahan
+            banners_dir = os.path.join(ROOT_DIR, "resources", "banners")
+            if os.path.exists(banners_dir):
+                for f in os.listdir(banners_dir):
+                    if f.lower().endswith((".png", ".jpg", ".jpeg")):
+                        try:
+                            # Kirim silent untuk dapat file_id (Ultroid Style Caching)
+                            m = await self.assistant.send_photo(
+                                self.log_channel,
+                                photo=os.path.join(banners_dir, f),
+                                caption=f"🌌 **Nebula Cache:** `{f}`"
+                            )
+                            if m.photo:
+                                banner_ids.append(m.photo.file_id)
+                            await m.delete()
+                        except Exception as e:
+                            LOGS.warning(f"Gagal mencache banner {f}: {e}")
+
+            if banner_ids:
+                await self.db.set("banner_file_ids", list(set(banner_ids)))
             
             if msg:
                 await self.db.set("last_startup_log_id", msg.id)
-                
+            
             return msg
         except Exception as e:
             LOGS.error(f"Failed to send startup notice: {e}")

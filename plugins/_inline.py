@@ -35,9 +35,17 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
         if not photo_url.startswith("http"):
             photo_url = "https://telegra.ph/file/0c976939988a8f6022ced.jpg"
 
-        # Tampilkan GANDA untuk stabilitas mutlak (Gaya Sentinel):
-        # Ambil file_id yang sudah dicache di server Telegram (Phase 6)
-        cached_file_id = await userbot.db.get("banner_file_id")
+        # Tampilkan GANDA untuk stabilitas mutlak (Gaya Sentinel + Shifting Cosmos):
+        # Ambil list file_id yang sudah dicache (Phase 7)
+        banner_ids = await userbot.db.get("banner_file_ids", [])
+        
+        # Pilih secara acak jika ada (Shifting Cosmos)
+        if banner_ids:
+            import random
+            cached_file_id = random.choice(banner_ids)
+        else:
+            # Fallback ke cache tunggal jika list kosong
+            cached_file_id = await userbot.db.get("banner_file_id")
 
         if cached_file_id:
             # PRIORITAS 1: Foto dari Cache Server (100% Stabil & Cepat)
