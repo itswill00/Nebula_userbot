@@ -91,9 +91,9 @@ async def restart_bot(client, message: Message):
         "msg_id": msg.id
     })
 
-    # Eksekusi restart proses (mengganti proses saat ini dengan proses baru)
+    # Eksekusi restart proses (Robust pattern via sys.argv)
     print("🔄 Restarting Nebula...")
-    os.execl(sys.executable, sys.executable, "main.py")
+    os.execl(sys.executable, sys.executable, *sys.argv)
 
 
 @Client.on_message(on_cmd("update", category="Sistem", info="Update bot."))
@@ -138,5 +138,5 @@ async def update_bot(client, message: Message):
         "msg_id": msg.id
     })
 
-    # Restart
-    os.execl(sys.executable, sys.executable, "main.py")
+    # Restart (Robust pattern via sys.argv)
+    os.execl(sys.executable, sys.executable, *sys.argv)
