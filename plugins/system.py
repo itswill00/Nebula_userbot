@@ -1,5 +1,9 @@
 import os
 import sys
+import time
+import psutil
+import platform
+import distro
 import asyncio
 from hydrogram import Client
 from hydrogram.types import Message
@@ -17,6 +21,66 @@ async def run_cmd(cmd):
     return stdout.decode().strip(), stderr.decode().strip()
 
 
+def get_size(bytes, suffix="B"):
+    """Skalasi bytes ke format yang mudah dibaca (e.g 1024 ke 1KB)."""
+    factor = 1024
+    for unit in ["", "K", "M", "G", "T", "P"]:
+        if bytes < factor:
+            return f"{bytes:.2f}{unit}{suffix}"
+        bytes /= factor
+
+
+@Client.on_message(on_cmd("sysinfo", category="System", info="Papan informasi sistem Nebula."))
+async def sys_info(client, message: Message):
+    await client.fast_edit(message, "📊 **Menganalisis sistem...**")
+    
+    # OS Info
+    uname = platform.uname()
+    os_name = f"{distro.name()} {distro.version()}" if platform.system() == "Linux" else platform.system()
+    
+    # CPU Info
+    cpufreq = psutil.cpu_freq()
+    cpu_usage = psutil.cpu_percent()
+    
+    # Memory Info
+    svmem = psutil.virtual_memory()
+    
+    # Disk Info
+    partitions = psutil.disk_partitions()
+    disk_info = ""
+    for partition in partitions:
+        try:
+            partition_usage = psutil.disk_usage(partition.mountpoint)
+            if partition.mountpoint == "/":
+                disk_info = f"{get_size(partition_usage.used)} / {get_size(partition_usage.total)} ({partition_usage.percent}%)"
+                break
+        except Exception:
+            continue
+
+    # Uptime
+    uptime_seconds = time.time() - psutil.boot_time()
+    uptime_h = int(uptime_seconds // 3600)
+    uptime_m = int((uptime_seconds % 3600) // 60)
+    
+    # Bot Uptime
+    bot_uptime_seconds = time.time() - client.start_time
+    bot_uptime_h = int(bot_uptime_seconds // 3600)
+    bot_uptime_m = int((bot_uptime_seconds % 3600) // 60)
+
+    info = (
+        "🖥 **Nebula System Monitor**\n\n"
+        f"**OS:** `{os_name}`\n"
+        f"**Kernel:** `{uname.release}`\n"
+        f"**Uptime Server:** `{uptime_h}h {uptime_m}m`\n"
+        f"**Uptime Nebula:** `{bot_uptime_h}h {bot_uptime_m}m`\n\n"
+        f"🧠 **CPU:** `{cpu_usage}%` ({psutil.cpu_count(logical=True)} Cores)\n"
+        f"📟 **RAM:** `{get_size(svmem.used)} / {get_size(svmem.total)} ({svmem.percent}%)`\n"
+        f"💽 **Disk (/):** `{disk_info}`\n"
+    )
+    
+    await client.fast_edit(message, info)
+
+
 @Client.on_message(on_cmd("restart", category="System", info="Restart bot Nebula."))
 async def restart_bot(client, message: Message):
     msg = await client.fast_edit(message, "🚀 **Nebula sedang merestart...**\nMohon tunggu sebentar.")
@@ -29,7 +93,6 @@ async def restart_bot(client, message: Message):
 
     # Eksekusi restart proses (mengganti proses saat ini dengan proses baru)
     print("🔄 Restarting Nebula...")
-    # Pastikan menggunakan path yang benar (asumsi main.py di root)
     os.execl(sys.executable, sys.executable, "main.py")
 
 

@@ -1,60 +1,73 @@
-from hydrogram import Client, filters
+from hydrogram import Client
 from hydrogram.types import Message
+from core.decorators import on_cmd
 
 
-@Client.on_message(filters.command("lang", prefixes=".") & filters.me)
-async def set_language(client, message: Message):
-    """Mengubah bahasa bot secara global."""
-    if len(message.command) < 2:
-        return await message.edit("`Format: .lang <id|en>`")
-
-    new_lang = message.command[1].lower()
-    if new_lang in ["id", "en"]:
-        await client.db.set("lang", new_lang)
-        success_msg = await client.get_string("SET_LANG_SUCCESS")
-        await message.edit(success_msg)
-    else:
-        err_msg = await client.get_string("SET_LANG_INVALID")
-        await message.edit(err_msg)
-
-
-@Client.on_message(filters.command("setting", prefixes=".") & filters.me)
-async def set_config(client, message: Message):
-    """Mengubah pengaturan internal bot."""
+@Client.on_message(on_cmd("setvar", category="Config", info="Setel variabel konfigurasi bot secara global."))
+async def set_var(client, message: Message):
     if len(message.command) < 3:
-        # Menampilkan daftar pengaturan saat ini
-        prefix = await client.db.get("prefix", ".")
-        anti_delete = await client.db.get("anti_delete", True)
-        anti_edit = await client.db.get("anti_edit", True)
-        lang = await client.db.get("lang", "id")
-
-        info = (
-            "⚙️ **Nebula Config Manager**\n\n"
-            f"**Language:** `{lang}`\n"
-            f"**Prefix:** `{prefix}`\n"
-            f"**Anti-Delete:** `{anti_delete}`\n"
-            f"**Anti-Edit:** `{anti_edit}`\n\n"
-            "Gunakan `.setting <key> <value>` untuk mengubah."
-        )
-        return await message.edit(info)
+        return await client.fast_edit(message, "⚠️ **Format Salah!**\nGunakan: `.setvar <nama_key> <nilai>`")
 
     key = message.command[1].lower()
     value = message.text.split(None, 2)[2]
 
-    # Handle boolean conversion
+    # Konversi otomatis untuk tipe data umum
     if value.lower() in ["true", "yes", "on"]:
         value = True
     elif value.lower() in ["false", "no", "off"]:
         value = False
+    elif value.isdigit():
+        value = int(value)
 
     await client.db.set(key, value)
-    success = await client.get_string("SET_VALUE_SUCCESS")
-    await message.edit(success.format(key=key, value=value))
+    await client.fast_edit(message, f"✅ **Variabel Diperbarui!**\n`{key}` ➔ `{value}`")
 
 
-@Client.on_message(filters.command("restart", prefixes=".") & filters.me)
-async def restart_bot(client, message: Message):
-    """Restart bot (hanya berfungsi di Docker dengan restart: always)."""
-    await message.edit("`Bot is restarting...`")
-    import os
-    os._exit(0)
+@Client.on_message(on_cmd("getvar", category="Config", info="Ambil nilai variabel dari database."))
+async def get_var(client, message: Message):
+    if len(message.command) < 2:
+        return await client.fast_edit(message, "⚠️ **Format Salah!**\nGunakan: `.getvar <nama_key>`")
+
+    key = message.command[1].lower()
+    value = await client.db.get(key)
+
+    if value is None:
+        return await client.fast_edit(message, f"❌ **Variabel `{key}` tidak ditemukan.**")
+
+    await client.fast_edit(message, f"🔍 **Detail Variabel:**\n`{key}` ➔ `{value}`")
+
+
+@Client.on_message(on_cmd("delvar", category="Config", info="Hapus variabel dari database."))
+async def del_var(client, message: Message):
+    if len(message.command) < 2:
+        return await client.fast_edit(message, "⚠️ **Format Salah!**\nGunakan: `.delvar <nama_key>`")
+
+    key = message.command[1].lower()
+    deleted = await client.db.delete(key)
+
+    if deleted:
+        await client.fast_edit(message, f"✅ **Variabel `{key}` berhasil dihapus.**")
+    else:
+        await client.fast_edit(message, f"❌ **Variabel `{key}` tidak ditemukan.**")
+
+
+@Client.on_message(on_cmd(["vars", "setting"], category="Config", info="Lihat semua konfigurasi aktif."))
+async def list_vars(client, message: Message):
+    all_data = await client.db.all_data()
+    if not all_data:
+        return await client.fast_edit(message, "📭 **Database masih kosong.**")
+
+    text = "⚙️ **Nebula Config Manager**\n\n"
+    for key, val in all_data.items():
+        # Sembunyikan data sensitif jika ada (misal session)
+        if "session" in key.lower() or "token" in key.lower():
+            val = "********"
+        text += f"• `{key}`: `{val}`\n"
+
+    text += "\n_Gunakan `.setvar <key> <val>` untuk mengubah._"
+    
+    if len(text) > 4096:
+        # Jika terlalu panjang, kirim sebagai log atau potong
+        text = text[:4000] + "..."
+    
+    await client.fast_edit(message, text)
