@@ -1,6 +1,7 @@
 from hydrogram.types import (
     InlineQuery,
     InlineQueryResultArticle,
+    InlineQueryResultPhoto,
     InputTextMessageContent
 )
 
@@ -24,11 +25,14 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
             "Gunakan tombol `«` dan `»` untuk beralih halaman."
         )
         markup = await get_help_markup(page=0)
+        
+        # Tampilkan sebagai Foto untuk kesan Premium (Ultroid Style)
         results.append(
-            InlineQueryResultArticle(
+            InlineQueryResultPhoto(
+                photo_url=userbot.banner_url,
+                thumb_url=userbot.banner_url,
                 title="Nebula Help Menu",
-                description="Pusat Kendali & Bantuan Nebula",
-                input_message_content=InputTextMessageContent(text),
+                caption=text,
                 reply_markup=markup
             )
         )

@@ -158,10 +158,46 @@ class NebulaBot(Client):
         if self.log_channel and self.assistant:
             await self._send_startup_notice(is_restarted)
 
+    @property
+    def banner_url(self):
+        """Ambil URL banner dari env atau gunakan default lokal."""
+        env_banner = os.getenv("BANNER")
+        if env_banner:
+            return env_banner
+        # Fallback ke banner lokal jika ada
+        local_path = os.path.join(ROOT_DIR, "resources", "banner.png")
+        if os.path.exists(local_path):
+            return local_path
+        # Default fallback
+        return "https://telegra.ph/file/0c976939988a8f6022ced.jpg"
+
+    async def send_card(self, chat_id, text, buttons=None, reply_to_message_id=None):
+        """Kirim pesan dengan banner & tombol bergaya premium (Graceful Fallback)."""
+        try:
+            # Kirim via asisten agar identitas bot tetap profesional
+            client = self.assistant if self.assistant else self
+            return await client.send_photo(
+                chat_id,
+                photo=self.banner_url,
+                caption=text,
+                reply_markup=buttons,
+                reply_to_message_id=reply_to_message_id
+            )
+        except Exception as e:
+            LOGS.warning(f"Media Engine fallback: {e}")
+            # Fallback ke teks murni jika media bermasalah (Ultroid Style)
+            return await self.send_message(
+                chat_id,
+                text,
+                reply_markup=buttons,
+                reply_to_message_id=reply_to_message_id,
+                disable_web_page_preview=True
+            )
+
     async def _send_startup_notice(self, is_restarted):
         """Kirim kartu telemetri startup via Assistant."""
         try:
-            # 1. Bersihkan Log Startup Sebelumnya (Opsional: menjaga kerapian)
+            # 1. Bersihkan Log Startup Sebelumnya
             old_log_id = await self.db.get("last_startup_log_id")
             if old_log_id:
                 try:
@@ -205,11 +241,11 @@ class NebulaBot(Client):
                 ]
             ])
 
-            # 5. Kirim via Assistant
-            msg = await self.assistant.send_message(
+            # 5. Kirim menggunakan Media Engine
+            msg = await self.send_card(
                 self.log_channel,
                 card_text,
-                reply_markup=buttons
+                buttons=buttons
             )
             
             # Simpan ID untuk pembersihan berikutnya
