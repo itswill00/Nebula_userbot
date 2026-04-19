@@ -1,52 +1,60 @@
-# 🌌 Nebula Userbot (God Mode)
+# Nebula Engine v1.6.0
 
-Built for speed, intelligence, and a human touch. Powered by **Hydrogram** and **Gemini 1.5 Flash**.
+A high-performance, modular Telegram Userbot built on the Hydrogram framework. Nebula Engine is designed for efficiency, stability, and extensibility, providing a seamless automation experience with a focus on core performance.
 
----
+## Key Features
 
-## 🚀 One-Command Installation
+- **Hydrogram Core**: Leveraging the latest MTProto implementation for speed and security.
+- **Asynchronous Architecture**: Fully non-blocking operations using `asyncio` and `uvloop`.
+- **Modular Plugin System**: Easily extendable with a structured plugin architecture.
+- **Integrated Assistant Bot**: Built-in support for an inline assistant bot for help menus and feedback.
+- **Dynamic Help Menu**: Interactive, paginated help menu with customizable banners.
+- **Local JSON Database**: Low-latency data persistence using an optimized in-memory cache system.
+- **Automated Tasks**: Integrated `APScheduler` for background tasks and maintenance.
 
-Run this single command on your **VPS** or **Termux** to set up everything automatically:
+## Requirements
 
+- Python 3.9 or higher
+- API_ID & API_HASH from [my.telegram.org](https://my.telegram.org)
+- BOT_TOKEN from [@BotFather](https://t.me/BotFather) (for Assistant features)
+
+## Installation
+
+### 1. Clone the repository
 ```bash
-git clone https://github.com/itswill00/Nebula_userbot.git && cd Nebula_userbot && bash setup.sh
+git clone https://github.com/itswill00/Nebula_userbot.git
+cd Nebula_userbot
 ```
 
-**What the installer does:**
-1. Installs system dependencies (FFmpeg, Aria2, etc).
-2. Sets up Python environment.
-3. Launches an **Interactive Wizard** to handle your keys and Telegram login.
-4. Generates a `run.sh` script for easy start/restart.
-
----
-
-## 🎮 Essential Commands (Prefix: `.`)
-
-| Command | Description |
-| :--- | :--- |
-| `.help` | Open the interactive help menu. |
-| `.db` | Open the Dashboard to toggle features (Anti-Delete, etc). |
-| `.ask` | Chat with Gemini AI. |
-| `.summarize` | Get a smart summary of group chats. |
-| `.vstk` | Turn video into stickers. |
-| `.leech` | Download large files to VPS/Termux. |
-| `.update` | Update Nebula directly from Telegram. |
-
----
-
-## 🛠 Manual Deployment (Optional)
-
-### Using Docker (Best for VPS)
-1. Run the `bash setup.sh` above first to generate your session.
-2. Once the wizard is finished, run:
-```bash
-docker-compose up -d --build
+### 2. Configure Environment
+Create a `.env` file in the root directory:
+```env
+API_ID=your_api_id
+API_HASH=your_api_hash
+BOT_TOKEN=your_bot_token
+LOG_CHANNEL=your_log_channel_id
 ```
 
----
+### 3. Setup and Run
+```bash
+bash setup.sh
+bash run.sh
+```
 
-## ❤️ Your Privacy
-Nebula stores your session data (`nebula.session`) and keys (`.env`) only on your local machine. These files are ignored by Git for your safety.
+## Usage
 
----
-*Built with heart for a better Telegram experience.*
+Once the bot is online, you can use the `.help` command to explore available modules.
+
+- `.help`: Triggers the interactive help menu via the Assistant Bot.
+- `.alive`: Checks the current status of the engine.
+
+## Code Standards
+
+Nebula Engine adheres to high engineering standards:
+- **PEP 8 Compliance**: Code is linted and formatted for readability.
+- **Type Safety**: Explicit handling of types to ensure runtime stability.
+- **Zero Gimmick**: Focused on functional utility without unnecessary overhead.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
