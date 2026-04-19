@@ -1,5 +1,10 @@
 import os
-from hydrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from hydrogram.types import (
+    Message,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    CallbackQuery
+)
 from hydrogram.errors import MessageNotModified
 from core.decorators import CMD_HELP
 from utils.media import catbox_upload
@@ -97,7 +102,9 @@ async def get_plugin_grid_markup(category, page):
         plugins = get_all_plugins_list()
         callback_prefix = "all_plugins"
     else:
-        plugins = [(p, category) for p in sorted(CMD_HELP.get(category, {}).keys())]
+        plugins = [
+            (p, category) for p in sorted(CMD_HELP.get(category, {}).keys())
+        ]
         callback_prefix = f"cat_{category}"
 
     page_plugins, max_page = paginate_list(plugins, page)
@@ -107,9 +114,12 @@ async def get_plugin_grid_markup(category, page):
         row = [
             InlineKeyboardButton(
                 p[0].title(),
-                callback_data=f"pdet_{p[1]}_{p[0]}_{page}_{'ALL' if category == 'ALL' else category}"
+                callback_data=(
+                    f"pdet_{p[1]}_{p[0]}_{page}_"
+                    f"{'ALL' if category == 'ALL' else category}"
+                )
             )
-            for p in page_plugins[i:i+COLUMNS]
+            for p in page_plugins[i:i + COLUMNS]
         ]
         buttons.append(row)
 
@@ -118,16 +128,26 @@ async def get_plugin_grid_markup(category, page):
     prev_page = page - 1 if page > 0 else max_page
     next_page = page + 1 if page < max_page else 0
 
-    nav.append(InlineKeyboardButton("« Prev", callback_data=f"{callback_prefix}_{prev_page}"))
-    nav.append(InlineKeyboardButton(f"{page+1}/{max_page+1}", callback_data="page_info"))
-    nav.append(InlineKeyboardButton("Next »", callback_data=f"{callback_prefix}_{next_page}"))
+    nav.append(InlineKeyboardButton(
+        "« Prev", callback_data=f"{callback_prefix}_{prev_page}")
+    )
+    nav.append(InlineKeyboardButton(
+        f"{page + 1}/{max_page + 1}", callback_data="page_info")
+    )
+    nav.append(InlineKeyboardButton(
+        "Next »", callback_data=f"{callback_prefix}_{next_page}")
+    )
 
     buttons.append(nav)
-    buttons.append([InlineKeyboardButton("⬅️ Kembali ke Menu", callback_data="back_to_main")])
+    buttons.append([
+        InlineKeyboardButton("⬅️ Kembali ke Menu", callback_data="back_to_main")
+    ])
     return InlineKeyboardMarkup(buttons)
 
 
-async def get_plugin_detail_markup(client_parent, category, plugin_name, back_page, back_cat):
+async def get_plugin_detail_markup(
+    client_parent, category, plugin_name, back_page, back_cat
+):
     """Halaman Detail Plugin."""
     buttons = []
 
@@ -135,11 +155,24 @@ async def get_plugin_detail_markup(client_parent, category, plugin_name, back_pa
     if plugin_name == "antispam":
         state = await client_parent.db.get("antispam", False)
         cb_data = f"utog_antispam_{category}_{plugin_name}_{back_page}_{back_cat}"
-        buttons.append([InlineKeyboardButton(f"Anti-Spam: {'✅ ON' if state else '❌ OFF'}", callback_data=cb_data)])
+        buttons.append([
+            InlineKeyboardButton(
+                f"Anti-Spam: {'✅ ON' if state else '❌ OFF'}",
+                callback_data=cb_data
+            )
+        ])
     elif plugin_name == "pmpermit":
         state = await client_parent.db.get("pm_permit_enabled", True)
-        cb_data = f"utog_pm_permit_enabled_{category}_{plugin_name}_{back_page}_{back_cat}"
-        buttons.append([InlineKeyboardButton(f"PM Permit: {'✅ ON' if state else '❌ OFF'}", callback_data=cb_data)])
+        cb_data = (
+            f"utog_pm_permit_enabled_{category}_{plugin_name}_"
+            f"{back_page}_{back_cat}"
+        )
+        buttons.append([
+            InlineKeyboardButton(
+                f"PM Permit: {'✅ ON' if state else '❌ OFF'}",
+                callback_data=cb_data
+            )
+        ])
     elif plugin_name == "afk":
         afk_data = await client_parent.db.get("afk", {"is_afk": False})
         state = afk_data.get("is_afk")
@@ -151,11 +184,20 @@ async def get_plugin_detail_markup(client_parent, category, plugin_name, back_pa
         ])
     elif plugin_name == "system":
         lang = await client_parent.db.get("lang", "id")
-        cb_data = f"utog_lang_switch_{category}_{plugin_name}_{back_page}_{back_cat}"
-        buttons.append([InlineKeyboardButton(f"Bahasa: {lang.upper()}", callback_data=cb_data)])
+        cb_data = (
+            f"utog_lang_switch_{category}_{plugin_name}_{back_page}_{back_cat}"
+        )
+        buttons.append([
+            InlineKeyboardButton(f"Bahasa: {lang.upper()}", callback_data=cb_data)
+        ])
 
-    back_callback = f"all_plugins_{back_page}" if back_cat == "ALL" else f"cat_{back_cat}_{back_page}"
-    buttons.append([InlineKeyboardButton("⬅️ Kembali", callback_data=back_callback)])
+    back_callback = (
+        f"all_plugins_{back_page}" if back_cat == "ALL"
+        else f"cat_{back_cat}_{back_page}"
+    )
+    buttons.append([
+        InlineKeyboardButton("⬅️ Kembali", callback_data=back_callback)
+    ])
     return InlineKeyboardMarkup(buttons)
 
 
@@ -176,7 +218,8 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         await callback_query.answer()
         try:
             await callback_query.edit_message_text(
-                f"{banner_prefix}🌌 **Nebula Engine - Help Menu**\nPilih kategori untuk menjelajahi plugin:",
+                f"{banner_prefix}🌌 **Nebula Engine - Help Menu**\n"
+                "Pilih kategori untuk menjelajahi plugin:",
                 reply_markup=await get_main_menu_markup(),
                 disable_web_page_preview=False
             )
@@ -189,8 +232,11 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         try:
             await callback_query.edit_message_text(
                 f"{banner_prefix}🖼️ **Ganti Banner Help Menu**\n\n"
-                "Silakan kirimkan sebuah **Foto** ke bot ini untuk dijadikan banner baru.",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Batal", callback_data="back_to_main")]]),
+                "Silakan kirimkan sebuah **Foto** ke bot ini untuk dijadikan "
+                "banner baru.",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("⬅️ Batal", callback_data="back_to_main")
+                ]]),
                 disable_web_page_preview=False
             )
         except MessageNotModified:
@@ -201,7 +247,8 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         page = int(data.split("_")[-1])
         try:
             await callback_query.edit_message_text(
-                f"{banner_prefix}🛠 **All Utilities**\nGeser ke kiri/kanan untuk melihat semua plugin:",
+                f"{banner_prefix}🛠 **All Utilities**\n"
+                "Geser ke kiri/kanan untuk melihat semua plugin:",
                 reply_markup=await get_plugin_grid_markup("ALL", page),
                 disable_web_page_preview=False
             )
@@ -214,7 +261,8 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         page = int(page)
         try:
             await callback_query.edit_message_text(
-                f"{banner_prefix}📂 **Kategori:** `{category}`\nPilih plugin untuk detail & kontrol:",
+                f"{banner_prefix}📂 **Kategori:** `{category}`\n"
+                "Pilih plugin untuk detail & kontrol:",
                 reply_markup=await get_plugin_grid_markup(category, page),
                 disable_web_page_preview=False
             )
@@ -251,7 +299,9 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
     elif data.startswith("utog_"):
         await callback_query.answer("⚡ Diupdate...")
         parts = data.split("_")
-        key, category, plugin_name, back_page, back_cat = parts[1], parts[2], parts[3], int(parts[4]), parts[5]
+        key, category, plugin_name, back_page, back_cat = (
+            parts[1], parts[2], parts[3], int(parts[4]), parts[5]
+        )
 
         if key == "lang_switch":
             curr = await userbot.db.get("lang", "id")
@@ -262,7 +312,9 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
 
         try:
             await callback_query.edit_message_reply_markup(
-                reply_markup=await get_plugin_detail_markup(userbot, category, plugin_name, back_page, back_cat)
+                reply_markup=await get_plugin_detail_markup(
+                    userbot, category, plugin_name, back_page, back_cat
+                )
             )
         except MessageNotModified:
             pass
@@ -278,10 +330,14 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
                 pass
 
     elif data == "page_info":
-        await callback_query.answer("Klik Prev/Next untuk menggeser.", show_alert=True)
+        await callback_query.answer(
+            "Klik Prev/Next untuk menggeser.", show_alert=True
+        )
 
     elif data == "afk_status_info":
-        await callback_query.answer("Status AFK diatur via .afk", show_alert=True)
+        await callback_query.answer(
+            "Status AFK diatur via .afk", show_alert=True
+        )
 
 
 # --- CONTACT HANDLER ---
@@ -298,20 +354,24 @@ async def assistant_contact_handler(client, message: Message):
                 photo = await message.download(file_name="downloads/")
                 url = await catbox_upload(photo)
                 os.remove(photo)
-                
+
                 if url:
                     await userbot.db.set("help_banner", url)
                     await userbot.db.delete("waiting_for_banner")
                     try:
-                        return await status.edit("✅ **Banner Help Menu berhasil diperbarui!**")
+                        return await status.edit(
+                            "✅ **Banner Help Menu berhasil diperbarui!**"
+                        )
                     except MessageNotModified:
                         pass
                 else:
                     try:
-                        return await status.edit("❌ **Gagal mengupload banner baru ke Catbox.**")
+                        return await status.edit(
+                            "❌ **Gagal mengupload banner baru ke Catbox.**"
+                        )
                     except MessageNotModified:
                         pass
-                
+
             elif message.text == "/cancel" or message.text == "Batal":
                 await userbot.db.delete("waiting_for_banner")
                 return await message.reply("❌ **Penggantian banner dibatalkan.**")
