@@ -8,7 +8,7 @@ from hydrogram.types import (
 
 async def assistant_inline_handler(client, inline_query: InlineQuery):
     # Impor lokal untuk menghindari potensi circular import
-    from .assistant import get_help_markup, get_plugin_detail_markup
+    from .assistant import get_help_markup, get_plugin_detail_markup, get_system_stats
     from core.decorators import CMD_HELP
 
     userbot = client.parent if hasattr(client, "parent") else client
@@ -18,11 +18,14 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
 
     if not query or query == "help":
         # Menu Utama
+        total_plugins, total_commands, addons = await get_system_stats()
+
         text = (
-            "🌌 **Nebula - Help Menu**\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "Pilih plugin di bawah ini untuk melihat detail perintah dan pengaturan.\n"
-            "Gunakan tombol `«` dan `»` untuk beralih halaman."
+            f"Bot Of {userbot.me.first_name}@{userbot.me.username}\n\n"
+            f"**Main Menu**\n\n"
+            f"PLUGINS ~ {total_plugins}\n"
+            f"ADDONS ~ {addons}\n"
+            f"TOTAL COMMANDS ~ {total_commands}"
         )
         markup = await get_help_markup(page=0)
         

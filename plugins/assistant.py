@@ -1,3 +1,4 @@
+import os
 from hydrogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
@@ -32,6 +33,24 @@ def paginate_list(items, page):
     return items[start:stop], (len(items) - 1) // PLUGINS_PER_PAGE
 
 
+async def get_system_stats():
+    """Menghitung statistik plugin dan perintah secara dinamis."""
+    total_plugins = 0
+    total_commands = 0
+    for cat in CMD_HELP:
+        total_plugins += len(CMD_HELP[cat])
+        for plug in CMD_HELP[cat]:
+            total_commands += len(CMD_HELP[cat][plug])
+
+    # Hitung Addons (file .py di folder plugins yang bukan internal)
+    try:
+        addons = len([f for f in os.listdir("plugins") if f.endswith(".py") and not f.startswith("_")])
+    except Exception:
+        addons = total_plugins
+
+    return total_plugins, total_commands, addons
+
+
 # --- MARKUP GENERATORS ---
 
 async def get_help_markup(page=0):
@@ -43,16 +62,23 @@ async def get_main_menu_markup():
     """Halaman Awal: Menu Utama Bergaya Ultroid."""
     buttons = [
         [
-            InlineKeyboardButton(
-                "🛠️ Utilities", callback_data="all_plugins|0"),
-            InlineKeyboardButton("🛡️ Security", callback_data="cat|Security|0")
+            InlineKeyboardButton("• Plugins", callback_data="all_plugins|0"),
+            InlineKeyboardButton("Manager •", callback_data="cat|Manager|0")
         ],
         [
-            InlineKeyboardButton("⚙️ Settings", callback_data="cat|Config|0"),
-            InlineKeyboardButton("👤 Identity", callback_data="cat|Identity|0")
+            InlineKeyboardButton("🛡️ Security", callback_data="cat|Security|0"),
+            InlineKeyboardButton("Config ⚙️", callback_data="cat|Config|0")
         ],
         [
-            InlineKeyboardButton("🗑 Tutup Menu", callback_data="close_db")
+            InlineKeyboardButton("👤 Identity", callback_data="cat|Identity|0"),
+            InlineKeyboardButton("System 🖥️", callback_data="cat|System|0")
+        ],
+        [
+            InlineKeyboardButton("🔍 Search", switch_inline_query_current_chat=""),
+            InlineKeyboardButton("Tools 🛠️", callback_data="cat|General|0")
+        ],
+        [
+            InlineKeyboardButton("•• CLOSE ••", callback_data="close_db")
         ]
     ]
     return InlineKeyboardMarkup(buttons)
