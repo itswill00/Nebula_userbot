@@ -1,13 +1,16 @@
 import os
 import json
+import time
 import logging
 import importlib
 import asyncio
 from hydrogram import Client, filters
 from hydrogram.types import Message
+from hydrogram.handlers import MessageHandler
 from dotenv import load_dotenv
 from core.database import LocalDB
 from core.decorators import CMD_HELP
+from core.brain import NebulaBrain
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 load_dotenv()
@@ -45,6 +48,12 @@ class NebulaBot(Client):
         self.cmd_help = CMD_HELP
         self.scheduler = AsyncIOScheduler()
         self.start_time = time.time()
+        
+        # Inisialisasi The Brain (Arbiter System)
+        self.brain = NebulaBrain(self)
+        # Register The Brain at group -1 (Tertinggi) untuk mencegat semua pesan
+        self.add_handler(MessageHandler(self.brain.process_message, filters.all & ~filters.me), group=-1)
+
         self._load_all_strings()
         
         # Log Channel Configuration

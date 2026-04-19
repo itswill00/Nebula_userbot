@@ -2,8 +2,10 @@ import functools
 from hydrogram import filters
 
 # Registry Global untuk menyimpan info perintah
-# Format: { 'Kategori': { 'cmd': 'info' } }
 CMD_HELP = {}
+
+# Registry Global untuk The Brain (Arbiter System)
+BRAIN_RULES = []
 
 def on_cmd(command, category="General", info="Belum ada info."):
     """
@@ -14,6 +16,13 @@ def on_cmd(command, category="General", info="Belum ada info."):
     
     CMD_HELP[category][command] = info
     
-    # Menggunakan filter standar Hydrogram
-    # filters.me memastikan hanya pemilik akun yang bisa menjalankan
     return filters.command(command, prefixes=".") & filters.me
+
+def brain_rule(func):
+    """
+    Dekorator untuk mendaftarkan rule pasif ke dalam The Brain (Arbiter System).
+    Fungsi harus menerima (client, context) dan mengembalikan Action atau None.
+    """
+    BRAIN_RULES.append(func)
+    return func
+

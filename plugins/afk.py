@@ -2,7 +2,8 @@ import time
 import asyncio
 from hydrogram import Client, filters
 from hydrogram.types import Message
-from core.decorators import on_cmd
+from core.decorators import on_cmd, brain_rule
+from core.brain import Action, Intent
 
 # In-memory cache untuk anti-spam (user_id: last_replied_time)
 AFK_REPLY_CACHE = {}
@@ -29,23 +30,24 @@ async def set_afk(client, message: Message):
     
     await client.fast_edit(message, f"💤 **Mode AFK Aktif**\n\n**Alasan:** `{reason}`")
 
-@Client.on_message(filters.all & ~filters.me, group=2)
-async def afk_handler(client, message: Message):
-    afk_data = await client.db.get("afk", {"is_afk": False})
+@brain_rule
+async def afk_brain_rule(client, ctx):
+    afk_data = ctx["afk_data"]
     if not afk_data.get("is_afk"):
-        return
+        return None
 
+    message = ctx["message"]
     # Cek apakah di-tag atau di PM
     is_tagged = message.mentioned or (message.reply_to_message and message.reply_to_message.from_user and message.reply_to_message.from_user.is_self)
     
-    if message.chat.type == "private" or is_tagged:
-        user_id = message.from_user.id if message.from_user else message.chat.id
-        now = time.time()
+    if ctx["chat_type"].value == "private" if hasattr(ctx["chat_type"], "value") else str(ctx["chat_type"]) == "ChatType.PRIVATE" or is_tagged:
+        user_id = ctx["user_id"]
+        now = ctx["time"]
         
         # Throttling: Cooldown 30 detik per user/chat
         last_reply = AFK_REPLY_CACHE.get(user_id, 0)
         if now - last_reply < 30:
-            return
+            return None
             
         AFK_REPLY_CACHE[user_id] = now
         
@@ -53,7 +55,12 @@ async def afk_handler(client, message: Message):
         since = format_duration(uptime)
 
         res = f"💤 **Maaf, Bos lagi AFK**\n\n**Sejak:** `{since} lalu`\n**Alasan:** `{afk_data.get('reason')}`"
-        await message.reply(res)
+        
+        async def execute_afk():
+            await message.reply(res)
+            
+        return Action(intent=Intent.REPLY, plugin_name="afk", execute=execute_afk)
+    return None
 
 @Client.on_message(filters.me & filters.outgoing, group=3)
 async def auto_unafk(client, message: Message):
