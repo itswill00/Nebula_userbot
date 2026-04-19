@@ -11,6 +11,7 @@ def on_cmd(command, category="General", info="Belum ada info."):
     """
     Dekorator kustom bergaya Ultroid.
     Secara otomatis mendeteksi nama file plugin untuk pengelompokan di Dashboard.
+    Mendukung command tunggal (str) atau multiple (list/tuple).
     """
     # Deteksi nama file pemanggil (misal: afk.py -> afk)
     stack = inspect.stack()
@@ -23,7 +24,14 @@ def on_cmd(command, category="General", info="Belum ada info."):
     if plugin_name not in CMD_HELP[category]:
         CMD_HELP[category][plugin_name] = {}
 
-    CMD_HELP[category][plugin_name][command] = info
+    # Daftarkan ke Registry Bantuan
+    if isinstance(command, (list, tuple)):
+        # Jika multiple, daftarkan command utama (pertama) ke help,
+        # atau daftarkan semua secara terpisah. Ultroid biasanya mendata semua.
+        for cmd in command:
+            CMD_HELP[category][plugin_name][cmd] = info
+    else:
+        CMD_HELP[category][plugin_name][command] = info
 
     return filters.command(command, prefixes=".") & filters.me
 
