@@ -1,4 +1,6 @@
 import os
+import shutil
+import time
 from hydrogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
@@ -219,6 +221,49 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         except MessageNotModified:
             pass
 
+    elif data.startswith("sw_banner"):
+        # sw_banner|action|msg_id
+        parts = data.split("|")
+        action, msg_id = parts[1], int(parts[2])
+        
+        await callback_query.edit_message_text("◈ Memproses visual...")
+        
+        try:
+            # 1. Ambil pesan asli yang berisi foto
+            source_msg = await client.get_messages(callback_query.message.chat.id, msg_id)
+            if not (source_msg.photo or source_msg.document):
+                return await callback_query.edit_message_text("❌ Media kadaluarsa.")
+
+            # 2. Setup Folder
+            banners_dir = os.path.join(os.getcwd(), "resources", "banners")
+            if not os.path.exists(banners_dir):
+                os.makedirs(banners_dir)
+
+            # 3. Eksekusi Aksi
+            if action == "replace":
+                # Hapus semua yang ada
+                for f in os.listdir(banners_dir):
+                    os.remove(os.path.join(banners_dir, f))
+                target_path = os.path.join(banners_dir, "cosmos.png")
+            else:
+                # Tambah koleksi (random name)
+                target_path = os.path.join(banners_dir, f"user_{int(time.time())}.png")
+
+            # 4. Download & Simpan
+            await source_msg.download(file_name=target_path)
+            
+            # 5. Reset Cache Database agar visual baru langsung aktif
+            await userbot.db.delete("banner_file_id")
+            await userbot.db.delete("banner_file_ids")
+            
+            await callback_query.edit_message_text(
+                "✅ **Banner Diaktifkan.**\n"
+                f"Tersimpan sebagai: `{os.path.basename(target_path)}`\n\n"
+                "Restart Nebula untuk memperbarui cache startup."
+            )
+        except Exception as e:
+            await callback_query.edit_message_text(f"❌ Gagal: {e}")
+
     elif data.startswith("all_plugins"):
         await callback_query.answer()
         # all_plugins|page or all_plugins_page
@@ -334,12 +379,25 @@ async def assistant_contact_handler(client, message):
     userbot = client.parent if hasattr(client, "parent") else client
     me = userbot.me
 
-    # Handler pesan untuk asisten (pesan masuk dari pengguna)
-    if message.from_user.id == me.id:
-        return
+    # Handler khusus Pemilik (Manajer Visual)
+    if message.from_user.id == userbot.owner_id:
+        if message.photo or (message.document and message.document.mime_type and "image" in message.document.mime_type):
+            return await message.reply(
+                "**Sistem Visual**\n\nDetect: `Visual Baru`\nKonfigurasi sebagai banner?",
+                reply_markup=InlineKeyboardMarkup([
+                    [
+                        InlineKeyboardButton("Terapkan (Ganti)", callback_data=f"sw_banner|replace|{message.id}"),
+                        InlineKeyboardButton("Tambah Koleksi", callback_data=f"sw_banner|add|{message.id}")
+                    ],
+                    [InlineKeyboardButton("Batalkan", callback_data="close_db")]
+                ])
+            )
+        # Jika teks dari owner, jangan forward tapi beri respon instruksi saja
+        if message.text and not message.text.startswith("."):
+             return await message.reply("Gunakan menu ini untuk upload banner atau gunakan perintah userbot.")
 
     log_text = (
-        f"📩 **Pesan Baru di Assistant Bot**\n\n"
+        f"📩 **Pesan Baru**\n\n"
         f"**Dari:** {message.from_user.mention} (`{message.from_user.id}`)\n"
         f"**Pesan:** {message.text or '[Media]'}"
     )
