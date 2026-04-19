@@ -1,72 +1,80 @@
 # 🌌 Nebula Userbot (God Mode)
 
-Selamat datang di **Nebula**! Ini bukan sekadar bot biasa, melainkan asisten pribadi digital yang dirancang untuk membantu kamu mengelola Telegram dengan lebih cerdas, cepat, dan tentu saja, lebih manusiawi. 
+Welcome to **Nebula**! This is not just another userbot; it's your personal digital assistant designed to help you manage Telegram smarter, faster, and more naturally.
 
-Nebula dibangun di atas fondasi **Hydrogram** yang kencang, dibekali kecerdasan **Gemini 1.5 Flash**, dan siap mendampingi kamu di berbagai platform—mulai dari VPS kelas atas sampai HP Android (Termux) kesayanganmu.
-
----
-
-## ✨ Apa Saja yang Bisa Nebula Lakukan?
-
-Nebula dibekali banyak "kekuatan" yang bisa kamu akses langsung dari chat:
-
-- **🧠 Asisten Pintar**: Tanya apa saja atau minta ringkasan obrolan grup yang berisik lewat integrasi Gemini AI.
-- **🎬 Pengolah Media**: Ubah video jadi sticker cantik atau download konten dari berbagai media sosial dalam sekejap.
-- **🛡 Keamanan Ketat**: Lindungi privasi kamu dengan *PM Guard* dan pantau pesan yang dihapus orang lain secara otomatis.
-- **🚀 Akses Sistem**: Kontrol server atau VPS kamu langsung dari Telegram seolah-olah kamu sedang di depan terminal.
-- **🤖 Mode Asisten**: Gunakan bot asisten sebagai gerbang komunikasi agar akun utama kamu tetap bersih dari spam.
+Built on the high-performance **Hydrogram** framework and powered by **Gemini 1.5 Flash** AI, Nebula is ready to accompany you on any platform—from high-end VPS to your Android phone (Termux).
 
 ---
 
-## 🛠 Panduan Memulai
+## ✨ Features at a Glance
 
-Pilih jalur yang paling nyaman buat kamu:
-
-### Opsi 1: Lewat Linux VPS (Paling Stabil)
-Cocok buat kamu yang ingin Nebula selalu siap 24/7 tanpa henti.
-1. `git clone https://github.com/itswill00/Nebula_userbot.git && cd Nebula_userbot`
-2. Isi kredensial kamu di file `.env` (API ID, Hash, dll).
-3. Jalankan `pip install -r requirements.txt && python3 main.py` untuk login pertama kali.
-4. Setelah itu, jalankan `docker-compose up -d --build` agar dia jalan terus di latar belakang.
-
-### Opsi 2: Lewat Termux (Di HP Android)
-Praktis dan bisa dibawa ke mana saja.
-1. Buka Termux, lalu ketik: `pkg install git -y`
-2. Clone Nebula: `git clone https://github.com/itswill00/Nebula_userbot.git && cd Nebula_userbot`
-3. Jalankan `bash setup.sh` untuk menyiapkan semuanya secara otomatis.
-4. Isi file `.env`, lalu jalankan bot dengan `./run.sh`.
+- **🧠 Smart AI Assistant**: Chat with Gemini AI or get instant summaries of long group conversations.
+- **🎬 Media Master**: Convert videos to stickers (.webm) or download content from any social media.
+- **🛡 Rock-Solid Security**: Protect your privacy with *PM Guard* and track deleted/edited messages.
+- **🚀 System Access**: Execute shell commands or monitor your VPS performance directly from chat.
+- **🤖 Dual-Client Interface**: An optional Assistant Bot provides a beautiful inline button interface.
 
 ---
 
-## 🎮 Perintah Favorit (Prefix: `.`)
+## 🚀 Quick Start (Copy & Paste)
 
-| Perintah | Apa Gunanya? |
+Choose your platform and run the commands below.
+
+### Option A: Linux VPS (Docker - Recommended)
+Best for 24/7 stability.
+```bash
+git clone https://github.com/itswill00/Nebula_userbot.git && cd Nebula_userbot
+# 1. Edit your credentials
+nano .env
+# 2. Login once to generate session
+pip install -r requirements.txt && python3 main.py
+# 3. Run permanently
+docker-compose up -d --build
+```
+
+### Option B: Android (Termux)
+Run Nebula directly from your phone.
+```bash
+pkg install git -y && git clone https://github.com/itswill00/Nebula_userbot.git && cd Nebula_userbot
+# 1. Run automated setup
+bash setup.sh
+# 2. Edit your credentials
+nano .env
+# 3. Start the bot
+./run.sh
+```
+
+---
+
+## 🎮 Essential Commands (Prefix: `.`)
+
+| Command | Description |
 | :--- | :--- |
-| `.help` | Buka menu bantuan yang cantik (dengan tombol!). |
-| `.db` | Masuk ke Pusat Kontrol buat ganti-ganti pengaturan bot. |
-| `.ask` | Tanya-tanya atau ngobrol sama AI Gemini. |
-| `.summarize` | Minta ringkasan apa aja yang diomongin orang di grup. |
-| `.vstk` | Bikin sticker video dari video apa aja. |
-| `.leech` | Download file besar ke VPS terus kirim ke Telegram kamu. |
-| `.sys` | Cek kondisi server kamu (CPU, RAM, dll) dengan bahasa santai. |
-| `.update` | Update bot kamu ke versi terbaru langsung dari chat. |
+| `.help` | Opens a beautiful, interactive help menu. |
+| `.db` | Opens the Control Center dashboard for easy settings. |
+| `.ask` | Chat directly with Gemini AI. |
+| `.summarize` | Get a smart summary of recent group chats. |
+| `.vstk` | Turn any video into a high-quality video sticker. |
+| `.leech` | Download large files to VPS and upload to Telegram. |
+| `.sys` | Monitor your server status with a friendly report. |
+| `.update` | Update Nebula to the latest version via chat. |
 
 ---
 
-## ⚙️ Mengatur Segalanya (`.env`)
+## ⚙️ Configuration (`.env`)
 
-Kamu butuh beberapa kunci buat nyalain Nebula:
-- **API_ID** & **API_HASH**: Ambil di [my.telegram.org](https://my.telegram.org).
-- **BOT_TOKEN**: Bikin asisten kamu di [@BotFather](https://t.me/BotFather).
-- **GEMINI_API_KEY**: Kunci kecerdasan AI kamu dari [Google AI Studio](https://aistudio.google.com/).
-
----
-
-## ❤️ Keamanan Kamu Utama
-Nebula sangat menjaga rahasia. Semua data login kamu (`.session`) dan kunci rahasia (`.env`) tersimpan aman di perangkat kamu sendiri dan nggak akan pernah tersebar. 
-
-## 📜 Lisensi
-Nebula menggunakan Lisensi MIT. Bebas kamu pakai dan kembangkan lagi!
+You'll need these keys to power up Nebula:
+- **API_ID** & **API_HASH**: Get them at [my.telegram.org](https://my.telegram.org).
+- **BOT_TOKEN**: Create your assistant at [@BotFather](https://t.me/BotFather).
+- **GEMINI_API_KEY**: Get your AI key at [Google AI Studio](https://aistudio.google.com/).
 
 ---
-*Dibuat dengan dedikasi untuk kenyamanan kamu.*
+
+## ❤️ Your Privacy Matters
+Nebula is designed with security in mind. Your session data (`.session`) and secret keys (`.env`) are stored locally on your device and are never shared or uploaded.
+
+## 📜 License
+Distributed under the MIT License. Feel free to use and modify!
+
+---
+*Built with heart for a better Telegram experience.*
