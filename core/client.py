@@ -3,8 +3,10 @@ import json
 import time
 import logging
 import asyncio
+import platform
+import psutil
 from hydrogram import Client, filters
-from hydrogram.types import Message
+from hydrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from hydrogram.handlers import MessageHandler
 from dotenv import load_dotenv
 from core.database import LocalDB
@@ -132,18 +134,82 @@ class NebulaBot(Client):
 
         # Pemulihan pasca restart
         restart_data = await self.db.get("restart_info")
+        is_restarted = False
         if restart_data:
             chat_id = restart_data.get("chat_id")
             msg_id = restart_data.get("msg_id")
             try:
-                # Menggunakan edit_message_text untuk kompatibilitas Hydrogram
                 await self.edit_message_text(chat_id, msg_id, "✅ **Nebula Berhasil Direstart!**")
+                is_restarted = True
             except Exception:
                 pass
             await self.db.delete("restart_info")
 
-        # Kirim notifikasi log
-        await self.send_log("🚀 **Nebula v1.6.0 is Online!**\nAll systems functional.")
+        # Notifikasi Startup (Telemetri DASHBOARD)
+        if self.log_channel and self.assistant:
+            await self._send_startup_notice(is_restarted)
+
+    async def _send_startup_notice(self, is_restarted):
+        """Kirim kartu telemetri startup via Assistant."""
+        try:
+            # 1. Bersihkan Log Startup Sebelumnya (Opsional: menjaga kerapian)
+            old_log_id = await self.db.get("last_startup_log_id")
+            if old_log_id:
+                try:
+                    await self.assistant.delete_messages(self.log_channel, old_log_id)
+                except Exception:
+                    pass
+
+            # 2. Kumpulkan Metrik Sistem
+            os_name = platform.system()
+            arch = platform.machine()
+            py_ver = platform.python_version()
+            ram = psutil.virtual_memory().percent
+            
+            # Hitung Plugin Aktif
+            plugin_list = [f for f in os.listdir("plugins") if f.endswith(".py") and not f.startswith("_")]
+            plugin_count = len(plugin_list)
+
+            # 3. Desain Kartu (Premium Style)
+            status_emoji = "🔄" if is_restarted else "🚀"
+            status_text = "Nebula Restarted" if is_restarted else "Nebula Online"
+            
+            card_text = (
+                f"{status_emoji} **{status_text}**\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"👤 **Owner:** {self.me.mention}\n"
+                f"🤖 **Assistant:** {self.assistant.me.mention}\n\n"
+                f"🖥️ **System:** `{os_name}` ({arch})\n"
+                f"⚙️ **Engine:** `Python {py_ver}`\n"
+                f"🧩 **Plugins:** `{plugin_count}` Active\n"
+                f"🧠 **RAM Load:** `{ram}%`"
+            )
+
+            # 4. Tombol Interaktif
+            buttons = InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton("🛠️ Dashboard", callback_data="back_to_main"),
+                    InlineKeyboardButton("📊 Stats", callback_data="cat|System|0")
+                ],
+                [
+                    InlineKeyboardButton("🌐 Repository", url="https://github.com/itswill00/Nebula_userbot")
+                ]
+            ])
+
+            # 5. Kirim via Assistant
+            msg = await self.assistant.send_message(
+                self.log_channel,
+                card_text,
+                reply_markup=buttons
+            )
+            
+            # Simpan ID untuk pembersihan berikutnya
+            if msg:
+                await self.db.set("last_startup_log_id", msg.id)
+                
+        except Exception as e:
+            LOGS.error(f"Failed to send startup notice: {e}")
+
         LOGS.info("Nebula 1.6.0 Active.")
 
     async def stop(self, *args):
