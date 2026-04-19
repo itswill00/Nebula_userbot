@@ -30,7 +30,7 @@ async def run_wizard():
         "nebula",
         api_id=int(api_id),
         api_hash=api_hash,
-        workdir=".",
+        workdir=os.getcwd(),
         device_model="Nebula Master",
         app_version="1.3.0"
     )

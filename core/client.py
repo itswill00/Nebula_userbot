@@ -31,7 +31,7 @@ class NebulaBot(Client):
             api_id=int(os.getenv("API_ID")),
             api_hash=os.getenv("API_HASH"),
             plugins=dict(root="plugins"),
-            workdir=".",
+            workdir=os.getcwd(),
             device_model="Nebula Master",
             app_version="1.3.0"
         )
