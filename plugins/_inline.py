@@ -37,7 +37,7 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
 
         # Tampilkan GANDA untuk stabilitas mutlak (Gaya Sentinel):
         # Ambil file_id yang sudah dicache di server Telegram (Phase 6)
-        cached_file_id = await client.db.get("banner_file_id")
+        cached_file_id = await userbot.db.get("banner_file_id")
 
         if cached_file_id:
             # PRIORITAS 1: Foto dari Cache Server (100% Stabil & Cepat)
