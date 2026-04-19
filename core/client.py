@@ -2,16 +2,18 @@ import os
 import json
 import logging
 import importlib
-from hydrogram import Client
+import asyncio
+from hydrogram import Client, filters
+from hydrogram.types import Message
 from dotenv import load_dotenv
 from core.database import LocalDB
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 load_dotenv()
 
-# Gunakan path absolut ke root proyek
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Konfigurasi Logging Pro
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -20,10 +22,15 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
+LOGS = logging.getLogger("Nebula")
 
 class NebulaBot(Client):
+    """
+    NebulaClient yang terinspirasi dari Ultroid.
+    Menambahkan fungsionalitas bantuan langsung ke dalam objek Client.
+    """
     def __init__(self):
-        # Pastikan direktori penting ada di root
+        # Inisialisasi direktori
         for folder in ["downloads", "strings", "plugins"]:
             target = os.path.join(ROOT_DIR, folder)
             if not os.path.exists(target):
@@ -36,13 +43,14 @@ class NebulaBot(Client):
             plugins=dict(root="plugins"),
             workdir=ROOT_DIR,
             device_model="Nebula Master",
-            app_version="1.3.0"
+            app_version="1.4.0"
         )
         self.db = LocalDB(os.path.join(ROOT_DIR, "nebula_db.json"))
         self.strings = {}
         self.scheduler = AsyncIOScheduler()
         self._load_all_strings()
         
+        # Dual-Client Logic
         self.assistant = None
         bot_token = os.getenv("BOT_TOKEN")
         if bot_token:
@@ -54,13 +62,11 @@ class NebulaBot(Client):
                 workdir=ROOT_DIR,
                 no_updates=False
             )
+            # Shortcut untuk parent access
+            self.assistant.parent = self
 
     def _load_all_strings(self):
         string_path = os.path.join(ROOT_DIR, "strings")
-        if not os.listdir(string_path):
-            self.strings["id"] = {"PROCESSING": "`Memproses...`"}
-            return
-
         for lang_file in os.listdir(string_path):
             if lang_file.endswith(".json"):
                 lang_code = lang_file.split(".")[0]
@@ -71,15 +77,19 @@ class NebulaBot(Client):
         lang = await self.db.get("lang", "id")
         return self.strings.get(lang, self.strings.get("id", {})).get(key, default or key)
 
-    async def reload_plugin(self, name):
-        module_path = f"plugins.{name}"
+    # --- HELPER METHODS (Ultroid Style) ---
+    
+    async def fast_edit(self, message: Message, text: str, parse_mode=None):
+        """Edit pesan dengan penanganan error yang lebih baik."""
         try:
-            module = importlib.import_module(module_path)
-            importlib.reload(module)
-            return True
+            return await message.edit(text, parse_mode=parse_mode)
         except Exception as e:
-            logging.error(f"Error reloading {name}: {e}")
-            return False
+            LOGS.error(f"Edit failed: {e}")
+            return message
+
+    async def run_in_loop(self, coroutine):
+        """Menjalankan coroutine dalam event loop bot."""
+        return asyncio.get_event_loop().create_task(coroutine)
 
     async def start(self):
         await super().start()
@@ -87,7 +97,8 @@ class NebulaBot(Client):
             self.scheduler.start()
         if self.assistant:
             await self.assistant.start()
-        logging.info("Nebula Core 1.3.0 started successfully.")
+            LOGS.info("Assistant Online.")
+        LOGS.info("Nebula Engine 1.4.0 (Modular) is now running.")
 
     async def stop(self, *args):
         await super().stop()
