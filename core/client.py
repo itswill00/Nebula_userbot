@@ -56,7 +56,7 @@ class NebulaBot(Client):
             api_hash=os.getenv("API_HASH"),
             plugins=dict(root="plugins"),
             workdir=ROOT_DIR,
-            device_model="Nebula Master",
+            device_model="Nebula",
             app_version="1.6.0"
         )
         self.db = LocalDB(os.path.join(ROOT_DIR, "nebula_db.json"))
@@ -138,15 +138,10 @@ class NebulaBot(Client):
 
     @property
     def banner_url(self):
-        """Ambil URL banner dari env atau gunakan default lokal."""
+        """Ambil URL banner (Zero Jargon Fallback)."""
         env_banner = os.getenv("BANNER")
         if env_banner:
             return env_banner
-        # Fallback ke banner lokal jika ada
-        local_path = os.path.join(ROOT_DIR, "resources", "banner.png")
-        if os.path.exists(local_path):
-            return local_path
-        # Default fallback (Direct High-Speed Link)
         return "https://telegra.ph/file/0c976939988a8f6022ced.jpg"
 
     def _load_strings(self):
@@ -172,21 +167,17 @@ class NebulaBot(Client):
                self.strings.get("en", {}).get(key, key))
 
     async def send_card(self, chat_id, text, buttons=None, reply_to_message_id=None):
-        """Kirim pesan dengan banner & tombol bergaya premium (Graceful Fallback)."""
+        """Kirim tampilan dengan banner visual."""
         try:
-            # Kirim via asisten agar identitas bot tetap profesional
-            client = self.assistant if self.assistant else self
-            return await client.send_photo(
+            return await self.assistant.send_photo(
                 chat_id,
                 photo=self.banner_url,
                 caption=text,
                 reply_markup=buttons,
                 reply_to_message_id=reply_to_message_id
             )
-        except Exception as e:
-            LOGS.warning(f"Media Engine fallback: {e}")
-            # Fallback ke teks murni jika media bermasalah (Ultroid Style)
-            return await self.send_message(
+        except Exception:
+            return await self.assistant.send_message(
                 chat_id,
                 text,
                 reply_markup=buttons,
@@ -215,64 +206,55 @@ class NebulaBot(Client):
             plugin_list = [f for f in os.listdir("plugins") if f.endswith(".py") and not f.startswith("_")]
             plugin_count = len(plugin_list)
 
-            # 3. Desain Kartu (Premium Style)
-            status_emoji = "🔄" if is_restarted else "🚀"
-            status_text = "Nebula Restarted" if is_restarted else "Nebula Online"
+            # 3. Desain Laporan (Zero Gimmick HUD)
+            status_text = "DIRESTART" if is_restarted else "AKTIF"
             
             card_text = (
-                f"{status_emoji} **{status_text}**\n"
-                f"━━━━━━━━━━━━━━━━━━━━\n"
-                f"👤 **Owner:** {self.me.mention}\n"
-                f"🤖 **Assistant:** {self.assistant.me.mention}\n\n"
-                f"🖥️ **System:** `{os_name}` ({arch})\n"
-                f"⚙️ **Engine:** `Python {py_ver}`\n"
-                f"🧩 **Plugins:** `{plugin_count}` Active\n"
-                f"🧠 **RAM Load:** `{ram}%`"
+                f"**Nebula {status_text}**\n"
+                f"━━━━━━━━━━━━━━━\n"
+                f"Pemilik  : {self.me.first_name}\n"
+                f"Sistem   : {os_name} ({arch})\n"
+                f"Fitur    : {plugin_count}\n"
+                f"Status   : {ram}% Load"
             )
 
-            # 4. Tombol Interaktif
+            # 4. Tombol Fungsional
             buttons = InlineKeyboardMarkup([
                 [
-                    InlineKeyboardButton("🛠️ Dashboard", callback_data="back_to_main"),
-                    InlineKeyboardButton("📊 Stats", callback_data="cat|System|0")
-                ],
-                [
-                    InlineKeyboardButton("🌐 Repository", url="https://github.com/itswill00/Nebula_userbot")
+                    InlineKeyboardButton("Bantuan", callback_data="back_to_main"),
+                    InlineKeyboardButton("Sistem", callback_data="cat|System|0")
                 ]
             ])
 
-            # 5. Kirim menggunakan Media Engine
+            # 5. Kirim Laporan via Media Engine
             msg = await self.send_card(
                 self.log_channel,
                 card_text,
                 buttons=buttons
             )
-
-            # 6. Tangkap File ID untuk Caching & Dynamic Banners (Phase 7 Shifting Cosmos)
-            banner_ids = []
             
-            # Tambahkan banner utama jika ada
+            # 6. Bulk Caching (Shifting Cosmos - Visual Rebirth)
+            banner_ids = []
             if msg and hasattr(msg, "photo") and msg.photo:
                 banner_ids.append(msg.photo.file_id)
                 await self.db.set("banner_file_id", msg.photo.file_id)
 
-            # Pindai folder banners untuk variasi tambahan
             banners_dir = os.path.join(ROOT_DIR, "resources", "banners")
             if os.path.exists(banners_dir):
                 for f in os.listdir(banners_dir):
                     if f.lower().endswith((".png", ".jpg", ".jpeg")):
                         try:
-                            # Kirim silent untuk dapat file_id (Ultroid Style Caching)
+                            # Caching silent
                             m = await self.assistant.send_photo(
                                 self.log_channel,
                                 photo=os.path.join(banners_dir, f),
-                                caption=f"🌌 **Nebula Cache:** `{f}`"
+                                caption=f"◈ Mencache visual: `{f}`"
                             )
                             if m.photo:
                                 banner_ids.append(m.photo.file_id)
                             await m.delete()
-                        except Exception as e:
-                            LOGS.warning(f"Gagal mencache banner {f}: {e}")
+                        except Exception:
+                            pass
 
             if banner_ids:
                 await self.db.set("banner_file_ids", list(set(banner_ids)))

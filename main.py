@@ -39,5 +39,5 @@ if __name__ == "__main__":
             InlineQueryHandler(assistant_inline_handler)
         )
 
-    print("✨ \033[96mNebula Ready! Memulai sistem...\033[0m")
+    print("\033[96mNebula Aktif.\033[0m")
     bot.run()

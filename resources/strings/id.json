@@ -1,17 +1,16 @@
 {
-    "startup_online": "Nebula Online",
-    "startup_restarted": "Nebula Restarted",
-    "owner": "Owner",
-    "assistant": "Assistant",
+    "startup_online": "Nebula Aktif",
+    "startup_restarted": "Nebula Direstart",
+    "owner": "Pemilik",
+    "assistant": "Asisten",
     "system": "Sistem",
-    "engine": "Engine",
-    "plugins": "Plugin",
+    "plugins": "Fitur",
     "ram_load": "Beban RAM",
-    "main_menu": "Main Menu",
+    "main_menu": "Menu Utama",
     "total_commands": "TOTAL PERINTAH",
-    "help_not_found": "Plugin tidak ditemukan.",
+    "help_not_found": "Fitur tidak ditemukan.",
     "access_denied": "Akses Ditolak.",
-    "gban_success": "🛡 **Global Ban**\n\nUser {user} telah diblokir secara global.",
-    "ungban_success": "🛡 **Ungban**\n\nUser {user} telah diampuni secara global.",
-    "sentinel_kick": "🚨 **Sentinel Alert**\n\nUser terlarang {user} terdeteksi bergabung dan telah dilenyapkan."
+    "gban_success": "**Blokir Global**\n\nUser {user} telah diblokir secara global.",
+    "ungban_success": "**Amnesti Global**\n\nUser {user} telah diampuni secara global.",
+    "guard_alert": "**Peringatan**\n\nUser terlarang {user} terdeteksi bergabung dan telah dikeluarkan."
 }

@@ -62,23 +62,23 @@ async def get_main_menu_markup():
     """Halaman Awal: Menu Utama Bergaya Ultroid."""
     buttons = [
         [
-            InlineKeyboardButton("• Plugins", callback_data="all_plugins|0"),
-            InlineKeyboardButton("Manager •", callback_data="cat|Manager|0")
+            InlineKeyboardButton("Fitur", callback_data="all_plugins|0"),
+            InlineKeyboardButton("Kelola", callback_data="cat|Manager|0")
         ],
         [
-            InlineKeyboardButton("🛡️ Security", callback_data="cat|Security|0"),
-            InlineKeyboardButton("Config ⚙️", callback_data="cat|Config|0")
+            InlineKeyboardButton("Keamanan", callback_data="cat|Security|0"),
+            InlineKeyboardButton("Pengaturan", callback_data="cat|Config|0")
         ],
         [
-            InlineKeyboardButton("👤 Identity", callback_data="cat|Identity|0"),
-            InlineKeyboardButton("System 🖥️", callback_data="cat|System|0")
+            InlineKeyboardButton("Identitas", callback_data="cat|Identity|0"),
+            InlineKeyboardButton("Sistem", callback_data="cat|System|0")
         ],
         [
-            InlineKeyboardButton("🔍 Search", switch_inline_query_current_chat=""),
-            InlineKeyboardButton("Tools 🛠️", callback_data="cat|General|0")
+            InlineKeyboardButton("Cari", switch_inline_query_current_chat=""),
+            InlineKeyboardButton("Umum", callback_data="cat|General|0")
         ],
         [
-            InlineKeyboardButton("•• CLOSE ••", callback_data="close_db")
+            InlineKeyboardButton("TUTUP", callback_data="close_db")
         ]
     ]
     return InlineKeyboardMarkup(buttons)
@@ -110,24 +110,24 @@ async def get_plugin_grid_markup(category, page):
         ]
         buttons.append(row)
 
-    # Navigasi Halaman (Hanya tampil jika lebih dari 1 halaman)
+    # Navigasi Halaman
     if max_page > 0:
         nav = []
         prev_page = page - 1 if page > 0 else max_page
         next_page = page + 1 if page < max_page else 0
 
         nav.append(InlineKeyboardButton(
-            "« Prev", callback_data=f"{callback_prefix}|{prev_page}")
+            "Kembali", callback_data=f"{callback_prefix}|{prev_page}")
         )
         nav.append(InlineKeyboardButton(
             f"{page + 1}/{max_page + 1}", callback_data="page_info")
         )
         nav.append(InlineKeyboardButton(
-            "Next »", callback_data=f"{callback_prefix}|{next_page}")
+            "Lanjut", callback_data=f"{callback_prefix}|{next_page}")
         )
         buttons.append(nav)
     buttons.append([
-        InlineKeyboardButton("⬅️ Kembali ke Menu",
+        InlineKeyboardButton("Menu Utama",
                              callback_data="back_to_main")
     ])
     return InlineKeyboardMarkup(buttons)
@@ -190,11 +190,11 @@ async def get_plugin_detail_markup(
         f"all_plugins|{back_page}" if back_cat == "ALL"
         else f"cat|{back_cat}|{back_page}"
     )
-    buttons.append([
-        InlineKeyboardButton(
-            "🚀 Share Plugin", switch_inline_query=plugin_name),
-        InlineKeyboardButton("⬅️ Kembali", callback_data=back_callback)
-    ])
+    nav_row = [
+        InlineKeyboardButton("Share", switch_inline_query=plugin_name),
+        InlineKeyboardButton("Kembali", callback_data=back_callback)
+    ]
+    buttons.append(nav_row)
     return InlineKeyboardMarkup(buttons)
 
 
@@ -211,8 +211,8 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         await callback_query.answer()
         try:
             await callback_query.edit_message_text(
-                "🌌 **Nebula - Help Menu**\n"
-                "Pilih kategori untuk menjelajahi plugin:",
+                "**Nebula**\n"
+                "Pilih bagian untuk eksplorasi fitur:",
                 reply_markup=await get_main_menu_markup(),
                 disable_web_page_preview=False
             )
@@ -226,8 +226,8 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         page = int(data.split(sep)[-1])
         try:
             await callback_query.edit_message_text(
-                "🛠 **All Utilities**\n"
-                "Geser ke kiri/kanan untuk melihat semua plugin:",
+                "**Fitur**\n"
+                "Daftar seluruh fitur Nebula:",
                 reply_markup=await get_plugin_grid_markup("ALL", page),
                 disable_web_page_preview=False
             )
@@ -258,8 +258,8 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         )
 
         commands = CMD_HELP.get(category, {}).get(plugin_name, {})
-        help_text = f"📦 **Plugin:** `{plugin_name.upper()}`\n"
-        help_text += "━━━━━━━━━━━━━━━━━━━━\n"
+        help_text = f"**Fitur:** `{plugin_name.upper()}`\n"
+        help_text += "━━━━━━━━━━━━━━━\n"
         if commands:
             for cmd, info in commands.items():
                 help_text += f"• `.{cmd}` : {info}\n"
@@ -307,7 +307,7 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
             await callback_query.message.delete()
         else:
             try:
-                await callback_query.edit_message_text("❌ Menu ditutup.")
+                await callback_query.edit_message_text("Tutup.")
             except MessageNotModified:
                 pass
 
@@ -345,7 +345,7 @@ async def assistant_contact_handler(client, message):
     )
     try:
         await userbot.send_message("me", log_text)
-        await message.reply("✅ Pesan kamu telah diteruskan ke Bos saya.")
+        await message.reply("Pesan telah diteruskan.")
     except Exception:
         pass
 

@@ -30,9 +30,9 @@ def get_size(bytes, suffix="B"):
         bytes /= factor
 
 
-@Client.on_message(on_cmd("sysinfo", category="System", info="Papan informasi sistem Nebula."))
+@Client.on_message(on_cmd("sysinfo", category="Sistem", info="Informasi sistem."))
 async def sys_info(client, message: Message):
-    await client.fast_edit(message, "📊 **Menganalisis sistem...**")
+    await client.fast_edit(message, "✦ Memproses data...")
     
     # OS Info
     uname = platform.uname()
@@ -68,22 +68,22 @@ async def sys_info(client, message: Message):
     bot_uptime_m = int((bot_uptime_seconds % 3600) // 60)
 
     info = (
-        "🖥 **Nebula System Monitor**\n\n"
-        f"**OS:** `{os_name}`\n"
-        f"**Kernel:** `{uname.release}`\n"
-        f"**Uptime Server:** `{uptime_h}h {uptime_m}m`\n"
-        f"**Uptime Nebula:** `{bot_uptime_h}h {bot_uptime_m}m`\n\n"
-        f"🧠 **CPU:** `{cpu_usage}%` ({psutil.cpu_count(logical=True)} Cores)\n"
-        f"📟 **RAM:** `{get_size(svmem.used)} / {get_size(svmem.total)} ({svmem.percent}%)`\n"
-        f"💽 **Disk (/):** `{disk_info}`\n"
+        "**Info Sistem**\n\n"
+        f"OS     : `{os_name}`\n"
+        f"Kernel : `{uname.release}`\n"
+        f"Uptime Bot  : `{bot_uptime_h}h {bot_uptime_m}m`\n"
+        f"Uptime Host : `{uptime_h}h {uptime_m}m`\n\n"
+        f"CPU    : `{cpu_usage}%`\n"
+        f"RAM    : `{get_size(svmem.used)} / {get_size(svmem.total)}`\n"
+        f"Disk   : `{disk_info}`\n"
     )
     
     await client.fast_edit(message, info)
 
 
-@Client.on_message(on_cmd("restart", category="System", info="Restart bot Nebula."))
+@Client.on_message(on_cmd("restart", category="Sistem", info="Restart bot."))
 async def restart_bot(client, message: Message):
-    msg = await client.fast_edit(message, "🚀 **Nebula sedang merestart...**\nMohon tunggu sebentar.")
+    msg = await client.fast_edit(message, "✦ Sedang merestart...")
 
     # Simpan konteks untuk pemulihan post-restart
     await client.db.set("restart_info", {
@@ -96,9 +96,9 @@ async def restart_bot(client, message: Message):
     os.execl(sys.executable, sys.executable, "main.py")
 
 
-@Client.on_message(on_cmd("update", category="System", info="Update bot Nebula dari repositori Git."))
+@Client.on_message(on_cmd("update", category="Sistem", info="Update bot."))
 async def update_bot(client, message: Message):
-    msg = await client.fast_edit(message, "🔍 **Memeriksa pembaruan...**")
+    msg = await client.fast_edit(message, "✦ Mengecek pembaruan...")
 
     # Ambil perubahan terbaru dari remote
     await run_cmd("wsl git fetch origin main")
@@ -112,7 +112,7 @@ async def update_bot(client, message: Message):
         count = 0
 
     if count == 0:
-        return await msg.edit("🚀 **Nebula sudah menggunakan versi terbaru.**")
+        return await msg.edit("Nebula sudah versi terbaru.")
 
     # Ambil daftar perubahan (changelog)
     changelog, _ = await run_cmd("wsl git log HEAD..origin/main --oneline")
@@ -130,7 +130,7 @@ async def update_bot(client, message: Message):
     if pull_err and "error" in pull_err.lower():
         return await msg.edit(f"❌ **Gagal memperbarui:**\n`{pull_err}`")
 
-    await msg.edit(f"✅ **Pembaruan selesai!**\n\n`{pull_out}`\n\n🔄 **Merestart Nebula...**")
+    await msg.edit(f"✦ Pembaruan selesai.\n`{pull_out}`\n\nSedang merestart...")
 
     # Simpan status untuk pemulihan pasca restart
     await client.db.set("restart_info", {

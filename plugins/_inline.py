@@ -30,55 +30,39 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
         )
         markup = await get_help_markup(page=0)
         
-        # PENTING: Inline Photo memerlukan URL Publik atau File ID.
-        photo_url = userbot.banner_url
-        if not photo_url.startswith("http"):
-            photo_url = "https://telegra.ph/file/0c976939988a8f6022ced.jpg"
-
-        # Tampilkan GANDA untuk stabilitas mutlak (Gaya Sentinel + Shifting Cosmos):
-        # Ambil list file_id yang sudah dicache (Phase 7)
-        banner_ids = await userbot.db.get("banner_file_ids", [])
+        # 1. Desain Menu Utama (Balanced HUD)
+        stats = f"◈ {total_plugins} Fitur | {total_commands} Perintah"
         
-        # Pilih secara acak jika ada (Shifting Cosmos)
-        if banner_ids:
-            import random
-            cached_file_id = random.choice(banner_ids)
-        else:
-            # Fallback ke cache tunggal jika list kosong
-            cached_file_id = await userbot.db.get("banner_file_id")
+        caption = (
+            f"**Nebula**\n\n"
+            f"`{stats}`\n"
+            f"Pengguna: {userbot.me.first_name}"
+        )
+
+        # 2. Ambil Banner Acak (Shifting Cosmos)
+        banner_ids = await userbot.db.get("banner_file_ids", [])
+        import random
+        cached_file_id = random.choice(banner_ids) if banner_ids else await userbot.db.get("banner_file_id")
 
         if cached_file_id:
-            # PRIORITAS 1: Foto dari Cache Server (100% Stabil & Cepat)
             results.append(
                 InlineQueryResultCachedPhoto(
                     photo_file_id=cached_file_id,
-                    title="Nebula Dashboard (Premium)",
-                    caption=text,
+                    title="Nebula Menu",
+                    caption=caption,
                     reply_markup=markup
                 )
             )
         else:
-            # PRIORITAS 2: Hasil Foto via URL (Hanya jika cache kosong)
+            # Fallback ke Artikel jika cache kosong
             results.append(
-                InlineQueryResultPhoto(
-                    photo_url=photo_url,
-                    thumb_url=photo_url,
-                    title="Nebula Dashboard (Premium)",
-                    caption=text,
+                InlineQueryResultArticle(
+                    title="Nebula Menu",
+                    description=stats,
+                    input_message_content=InputTextMessageContent(caption),
                     reply_markup=markup
                 )
             )
-        
-        # 3. Hasil Artikel (Pasti Berhasil / Safe Mode)
-        results.append(
-            InlineQueryResultArticle(
-                title="Nebula Help Center (Safe Mode)",
-                description="Buka menu bantuan jika gambar gagal muncul.",
-                input_message_content=InputTextMessageContent(text),
-                reply_markup=markup,
-                thumb_url=photo_url
-            )
-        )
     else:
         # Cek Pencarian Plugin Spesifik
         found_plugins = []

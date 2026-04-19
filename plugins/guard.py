@@ -5,7 +5,7 @@ import logging
 
 LOGS = logging.getLogger("Nebula")
 
-@Client.on_message(on_cmd("gban", category="Security", info="Blokir user secara global dari semua grup."))
+@Client.on_message(on_cmd("gban", category="Keamanan", info="Blokir user secara global dari semua grup."))
 async def gban_user(client, message: Message):
     replied = message.reply_to_message
     if not replied:
@@ -30,7 +30,7 @@ async def gban_user(client, message: Message):
     await client.fast_edit(message, res_text)
 
 
-@Client.on_message(on_cmd("ungban", category="Security", info="Lepas blokir global user."))
+@Client.on_message(on_cmd("ungban", category="Keamanan", info="Lepas blokir global user."))
 async def ungban_user(client, message: Message):
     replied = message.reply_to_message
     if not replied:
@@ -60,7 +60,7 @@ async def gban_watcher(client, update: ChatMemberUpdated):
         try:
             await client.ban_chat_member(update.chat.id, user.id)
             # Notifikasi ke log atau chat
-            alert = client.get_string("sentinel_kick").format(user=user.mention)
+            alert = client.get_string("guard_alert").format(user=user.mention)
             await client.send_message(update.chat.id, alert)
         except Exception as e:
-            LOGS.error(f"Sentinel failed to eject gban user: {e}")
+            LOGS.error(f"Gagal menendang user gban: {e}")
