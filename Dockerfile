@@ -17,4 +17,5 @@ RUN uv pip install --system -r requirements.txt
 
 COPY . .
 
-CMD ["python", "main.py"]
+# Jalankan aria2 rpc dan bot secara bersamaan
+CMD aria2c --enable-rpc --rpc-listen-all=false --rpc-listen-port=6800 --max-connection-per-server=10 --rpc-max-request-size=100M --daemon && python main.py
