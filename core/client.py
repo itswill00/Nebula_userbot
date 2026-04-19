@@ -19,7 +19,7 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 logging.basicConfig(
     level=logging.INFO, 
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(os.path.join(ROOT_DIR, "nebula.log")),
         logging.StreamHandler()
@@ -27,8 +27,22 @@ logging.basicConfig(
 )
 LOGS = logging.getLogger("Nebula")
 
+# Saring log library agar terminal bersih
+logging.getLogger("hydrogram").setLevel(logging.WARNING)
+logging.getLogger("apscheduler").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
 class NebulaBot(Client):
     def __init__(self):
+        print("\033[94m" + r"""
+    _   __     __            __      
+   / | / /__  / /_  __  ____/ /___ _ 
+  /  |/ / _ \/ __ \/ / / / __  / __ `/ 
+ / /|  /  __/ /_/ / /_/ / /_/ / /_/ /  
+/_/ |_/\___/_.___/\__,_/\__,_/\__,_/   
+        """ + "\033[0m")
+        print("🚀 \033[92mInisialisasi Nebula Engine...\033[0m")
+        
         for folder in ["downloads", "strings", "plugins"]:
             target = os.path.join(ROOT_DIR, folder)
             if not os.path.exists(target):

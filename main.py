@@ -13,24 +13,12 @@ if __name__ == "__main__":
     if bot.assistant:
         bot.assistant.parent = bot
         
-        # 1. Handler untuk Contact Bot (Pesan Masuk dari orang asing)
-        bot.assistant.add_handler(
-            MessageHandler(assistant_contact_handler, filters.private & ~filters.bot)
-        )
-        
-        # 2. Handler untuk Callback Dashboard (Setting Bot)
-        bot.assistant.add_handler(
-            CallbackQueryHandler(assistant_callback_handler, filters.regex(r"^conf_|^close_db$"))
-        )
-        
-        # 3. Handler untuk Callback Menu Bantuan (.help)
-        bot.assistant.add_handler(
-            CallbackQueryHandler(help_callback_handler, filters.regex(r"^help_"))
-        )
+        # Handler Assistant
+        bot.assistant.add_handler(MessageHandler(assistant_contact_handler, filters.private & ~filters.bot))
+        bot.assistant.add_handler(CallbackQueryHandler(assistant_callback_handler, filters.regex(r"^conf_|^close_db$")))
+        bot.assistant.add_handler(CallbackQueryHandler(help_callback_handler, filters.regex(r"^help_")))
+        bot.assistant.add_handler(InlineQueryHandler(assistant_inline_handler))
 
-        # 4. Handler untuk Inline Query (@bot_username help)
-        bot.assistant.add_handler(
-            InlineQueryHandler(assistant_inline_handler)
-        )
-
+    print("✨ \033[96mNebula Ready! Memulai sistem...\033[0m")
     bot.run()
+
