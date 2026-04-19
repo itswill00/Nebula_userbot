@@ -1,4 +1,9 @@
-from hydrogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent
+from hydrogram.types import (
+    InlineQuery,
+    InlineQueryResultPhoto,
+    InputTextMessageContent
+)
+from .assistant import BANNER_PATH
 
 
 async def assistant_inline_handler(client, inline_query: InlineQuery):
@@ -18,11 +23,12 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
 
         await inline_query.answer(
             results=[
-                InlineQueryResultArticle(
+                InlineQueryResultPhoto(
+                    photo_url=BANNER_PATH,
                     title="Nebula Help Menu",
-                    input_message_content=InputTextMessageContent(text),
-                    reply_markup=markup,
-                    description="Daftar plugin dan perintah Nebula."
+                    description="Daftar plugin dan perintah Nebula.",
+                    caption=text,
+                    reply_markup=markup
                 )
             ],
             cache_time=1

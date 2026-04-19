@@ -6,6 +6,7 @@ from core.decorators import CMD_HELP
 COLUMNS = 3
 ROWS = 4
 PLUGINS_PER_PAGE = COLUMNS * ROWS
+BANNER_PATH = "resources/banner.jpg"
 
 
 # --- DATA HELPERS ---
@@ -131,7 +132,7 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
 
     if data == "back_to_main":
         await callback_query.answer()
-        await callback_query.edit_message_text(
+        await callback_query.edit_message_caption(
             "🌌 **Nebula Engine - Help Menu**\nPilih kategori untuk menjelajahi plugin:",
             reply_markup=await get_main_menu_markup()
         )
@@ -139,7 +140,7 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
     elif data.startswith("all_plugins_"):
         await callback_query.answer()
         page = int(data.split("_")[-1])
-        await callback_query.edit_message_text(
+        await callback_query.edit_message_caption(
             "🛠 **All Utilities**\nGeser ke kiri/kanan untuk melihat semua plugin:",
             reply_markup=await get_plugin_grid_markup("ALL", page)
         )
@@ -148,7 +149,7 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         await callback_query.answer()
         _, category, page = data.split("_")
         page = int(page)
-        await callback_query.edit_message_text(
+        await callback_query.edit_message_caption(
             f"📂 **Kategori:** `{category}`\nPilih plugin untuk detail & kontrol:",
             reply_markup=await get_plugin_grid_markup(category, page)
         )
@@ -156,7 +157,9 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
     elif data.startswith("pdet_"):
         await callback_query.answer()
         parts = data.split("_")
-        category, plugin_name, back_page, back_cat = parts[1], parts[2], int(parts[3]), parts[4]
+        category, plugin_name, back_page, back_cat = (
+            parts[1], parts[2], int(parts[3]), parts[4]
+        )
 
         commands = CMD_HELP.get(category, {}).get(plugin_name, {})
         help_text = f"📦 **Plugin:** `{plugin_name.upper()}`\n"
@@ -167,9 +170,11 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         else:
             help_text += "_Tidak ada informasi perintah._"
 
-        await callback_query.edit_message_text(
+        await callback_query.edit_message_caption(
             help_text,
-            reply_markup=await get_plugin_detail_markup(userbot, category, plugin_name, back_page, back_cat)
+            reply_markup=await get_plugin_detail_markup(
+                userbot, category, plugin_name, back_page, back_cat
+            )
         )
 
     elif data.startswith("utog_"):
