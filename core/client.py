@@ -13,7 +13,6 @@ load_dotenv()
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Konfigurasi Logging Pro
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -25,12 +24,7 @@ logging.basicConfig(
 LOGS = logging.getLogger("Nebula")
 
 class NebulaBot(Client):
-    """
-    NebulaClient yang terinspirasi dari Ultroid.
-    Menambahkan fungsionalitas bantuan langsung ke dalam objek Client.
-    """
     def __init__(self):
-        # Inisialisasi direktori
         for folder in ["downloads", "strings", "plugins"]:
             target = os.path.join(ROOT_DIR, folder)
             if not os.path.exists(target):
@@ -43,15 +37,14 @@ class NebulaBot(Client):
             plugins=dict(root="plugins"),
             workdir=ROOT_DIR,
             device_model="Nebula Master",
-            app_version="1.4.0"
+            app_version="1.5.0"
         )
         self.db = LocalDB(os.path.join(ROOT_DIR, "nebula_db.json"))
         self.strings = {}
-        self.cmd_help = {} # Registry untuk menyimpan info perintah
+        self.cmd_help = {} # Registry: {kategori: {cmd: info}}
         self.scheduler = AsyncIOScheduler()
         self._load_all_strings()
         
-        # Dual-Client Logic
         self.assistant = None
         bot_token = os.getenv("BOT_TOKEN")
         if bot_token:
@@ -63,7 +56,6 @@ class NebulaBot(Client):
                 workdir=ROOT_DIR,
                 no_updates=False
             )
-            # Shortcut untuk parent access
             self.assistant.parent = self
 
     def _load_all_strings(self):
@@ -78,19 +70,28 @@ class NebulaBot(Client):
         lang = await self.db.get("lang", "id")
         return self.strings.get(lang, self.strings.get("id", {})).get(key, default or key)
 
-    # --- HELPER METHODS (Ultroid Style) ---
+    # --- THE POWERFUL DECORATOR (Userge/Ultroid Style) ---
     
+    def on_cmd(self, command, category="General", info="Belum ada info."):
+        """
+        Dekorator kustom untuk registrasi perintah otomatis.
+        """
+        if category not in self.cmd_help:
+            self.cmd_help[category] = {}
+        
+        # Simpan metadata bantuan
+        self.cmd_help[category][command] = info
+        
+        # Kembalikan filter standar Hydrogram
+        prefix = "." # Bisa dibuat dinamis dari DB nanti
+        return self.on_message(filters.command(command, prefixes=prefix) & filters.me)
+
     async def fast_edit(self, message: Message, text: str, parse_mode=None):
-        """Edit pesan dengan penanganan error yang lebih baik."""
         try:
             return await message.edit(text, parse_mode=parse_mode)
         except Exception as e:
             LOGS.error(f"Edit failed: {e}")
             return message
-
-    async def run_in_loop(self, coroutine):
-        """Menjalankan coroutine dalam event loop bot."""
-        return asyncio.get_event_loop().create_task(coroutine)
 
     async def start(self):
         await super().start()
@@ -98,8 +99,7 @@ class NebulaBot(Client):
             self.scheduler.start()
         if self.assistant:
             await self.assistant.start()
-            LOGS.info("Assistant Online.")
-        LOGS.info("Nebula Engine 1.4.0 (Modular) is now running.")
+        LOGS.info("Nebula Engine 1.5.0 (Ultra-Framework) Active.")
 
     async def stop(self, *args):
         await super().stop()

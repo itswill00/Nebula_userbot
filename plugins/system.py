@@ -5,18 +5,17 @@ from hydrogram import Client, filters
 from hydrogram.types import Message
 from utils.shell import async_exec
 
-PREFIX = "."
-
-@Client.on_message(filters.command("sh", prefixes=PREFIX) & filters.me)
+# Menggunakan dekorator baru
+@Client.on_cmd("sh", category="System", info="Eksekusi terminal (bash).")
 async def shell_runner(client, message: Message):
     if len(message.command) < 2:
-        return await message.edit("`Berikan perintah shell.`")
+        return await message.edit("`Coba kasih perintah terminalnya apa.`")
     cmd = message.text.split(maxsplit=1)[1]
-    await message.edit("`Executing...`")
+    await message.edit("`Siap, lagi aku kerjain...`")
     result = await async_exec(cmd)
     await message.edit(f"**$** `{cmd}`\n\n**Output:**\n```bash\n{result}\n```")
 
-@Client.on_message(filters.command("sys", prefixes=PREFIX) & filters.me)
+@Client.on_cmd("sys", category="System", info="Pantau kesehatan server.")
 async def system_stats(client, message: Message):
     cpu = psutil.cpu_percent(interval=0.5)
     mem = psutil.virtual_memory()
@@ -27,36 +26,21 @@ async def system_stats(client, message: Message):
         f"\n**Pemakaian RAM:** `{mem.percent}%` dari total `{mem.total // (1024**2)}MB`"
         f"\n**Sisa Disk:** `{100 - disk.percent}%` lagi kosong."
     )
-    await message.edit(stats)
+    await client.fast_edit(message, stats)
 
-@Client.on_message(filters.command("update", prefixes=PREFIX) & filters.me)
-async def update_bot(client, message: Message):
-    """Memperbarui kode dari GitHub dan merestart bot."""
-    await message.edit("`Bentar, aku cek dulu ya ke GitHub kalau ada pembaruan...`")
-    out = await async_exec("git pull")
-    
-    if "Already up to date" in out:
-        return await message.edit(f"✅ **Beres!** Aku udah versi paling baru kok.")
-    
-    await message.edit(f"🔄 **Ada pembaruan nih!**\n`{out}`\n\n`Aku update sekarang terus aku restart ya...`")
-    os._exit(0)
-
-@Client.on_message(filters.command("logs", prefixes=PREFIX) & filters.me)
-async def view_logs(client, message: Message):
-    """Melihat 20 baris terakhir dari log bot."""
-    if not os.path.exists("nebula.log"):
-        return await message.edit("`Log file tidak ditemukan.`")
-        
-    with open("nebula.log", "r") as f:
-        lines = f.readlines()
-        last_lines = "".join(lines[-20:])
-        
-    await message.edit(f"📜 **Nebula Logs (Last 20 lines):**\n\n```text\n{last_lines}```")
-
-@Client.on_message(filters.command("ping", prefixes=PREFIX) & filters.me)
+@Client.on_cmd("ping", category="System", info="Tes latensi bot ke Telegram.")
 async def ping_pong(client, message: Message):
     start_time = time.time()
-    await message.edit("`Pinging...`")
+    await message.edit("`Bentar, aku cek dulu...`")
     end_time = time.time()
     latency = round((end_time - start_time) * 1000, 2)
-    await message.edit(f"**Pong!**\nLatency: `{latency}ms`")
+    await message.edit(f"**Pong!**\nLatensi aku: `{latency}ms`")
+
+@Client.on_cmd("update", category="System", info="Perbarui bot ke versi terbaru.")
+async def update_bot(client, message: Message):
+    await message.edit("`Bentar, aku cek dulu ya ke GitHub kalau ada pembaruan...`")
+    out = await async_exec("git pull")
+    if "Already up to date" in out:
+        return await message.edit(f"✅ **Beres!** Aku udah versi paling baru kok.")
+    await message.edit(f"🔄 **Ada pembaruan nih!**\n`{out}`\n\n`Aku update sekarang terus aku restart ya...`")
+    os._exit(0)
