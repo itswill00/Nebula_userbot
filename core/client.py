@@ -248,10 +248,14 @@ class NebulaBot(Client):
                 buttons=buttons
             )
             
-            # Simpan ID untuk pembersihan berikutnya
+            # 6. Tangkap File ID untuk Caching (Phase 6 Sentinel)
+            if msg and hasattr(msg, "photo") and msg.photo:
+                await self.db.set("banner_file_id", msg.photo.file_id)
+            
             if msg:
                 await self.db.set("last_startup_log_id", msg.id)
                 
+            return msg
         except Exception as e:
             LOGS.error(f"Failed to send startup notice: {e}")
 

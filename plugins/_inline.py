@@ -2,6 +2,7 @@ from hydrogram.types import (
     InlineQuery,
     InlineQueryResultArticle,
     InlineQueryResultPhoto,
+    InlineQueryResultCachedPhoto,
     InputTextMessageContent
 )
 
@@ -29,24 +30,38 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
         )
         markup = await get_help_markup(page=0)
         
-        # PENTING: Inline Photo memerlukan URL Publik, tidak bisa file lokal.
+        # PENTING: Inline Photo memerlukan URL Publik atau File ID.
         photo_url = userbot.banner_url
         if not photo_url.startswith("http"):
-            # Fallback ke URL publik jika banner_url adalah path lokal
             photo_url = "https://telegra.ph/file/0c976939988a8f6022ced.jpg"
 
-        # Tampilkan GANDA untuk stabilitas (Gaya Ultroid):
-        # 1. Hasil Foto (Dashboard Premium)
-        results.append(
-            InlineQueryResultPhoto(
-                photo_url=photo_url,
-                thumb_url=photo_url,
-                title="Nebula Dashboard (Premium)",
-                caption=text,
-                reply_markup=markup
+        # Tampilkan GANDA untuk stabilitas mutlak (Gaya Sentinel):
+        # Ambil file_id yang sudah dicache di server Telegram (Phase 6)
+        cached_file_id = await client.db.get("banner_file_id")
+
+        if cached_file_id:
+            # PRIORITAS 1: Foto dari Cache Server (100% Stabil & Cepat)
+            results.append(
+                InlineQueryResultCachedPhoto(
+                    photo_file_id=cached_file_id,
+                    title="Nebula Dashboard (Premium)",
+                    caption=text,
+                    reply_markup=markup
+                )
             )
-        )
-        # 2. Hasil Artikel (Pasti Berhasil / Safe Mode)
+        else:
+            # PRIORITAS 2: Hasil Foto via URL (Hanya jika cache kosong)
+            results.append(
+                InlineQueryResultPhoto(
+                    photo_url=photo_url,
+                    thumb_url=photo_url,
+                    title="Nebula Dashboard (Premium)",
+                    caption=text,
+                    reply_markup=markup
+                )
+            )
+        
+        # 3. Hasil Artikel (Pasti Berhasil / Safe Mode)
         results.append(
             InlineQueryResultArticle(
                 title="Nebula Help Center (Safe Mode)",
