@@ -63,6 +63,10 @@ class NebulaBot(Client):
         # Load database ke memori agar respon tombol secepat kilat (0ms delay)
         asyncio.get_event_loop().run_until_complete(self.db.load_to_memory())
 
+        # Konfigurasi ID Pemilik
+        owner_id = os.getenv("OWNER_ID")
+        self.owner_id = int(owner_id) if owner_id and owner_id.isdigit() else None
+
         self.strings = {}
         self.cmd_help = CMD_HELP
         self.scheduler = AsyncIOScheduler()
@@ -129,6 +133,11 @@ class NebulaBot(Client):
             self.assistant.me = await self.assistant.get_me()
 
         await super().start()
+        
+        # Auto-detect Owner ID jika tidak diset di env
+        if not self.owner_id:
+            self.owner_id = self.me.id
+            
         if not self.scheduler.running:
             self.scheduler.start()
 

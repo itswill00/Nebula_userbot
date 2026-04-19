@@ -2,7 +2,34 @@ from hydrogram import Client, filters
 from hydrogram.types import Message
 
 
-@Client.on_message(filters.all & ~filters.me, group=-1)
+async def _log_guard_filter(_, client, message: Message):
+    """Filter pintar untuk mencegah log spam dan feedback loop."""
+    # 1. Selalu abaikan jika kejadian ada di dalam LOG_CHANNEL itu sendiri
+    if message.chat and message.chat.id == client.log_channel:
+        return False
+
+    # 2. Ambil ID pengirim
+    sender_id = message.from_user.id if message.from_user else None
+    if not sender_id:
+        return True
+
+    # 3. Abaikan jika pengirim adalah saya (Userbot)
+    if sender_id == client.me.id:
+        return False
+
+    # 4. Abaikan jika pengirim adalah Asisten Nebula
+    if client.assistant and hasattr(client.assistant, "me") and client.assistant.me:
+        if sender_id == client.assistant.me.id:
+            return False
+
+    return True
+
+
+# Daftarkan filter kustom
+log_guard = filters.create(_log_guard_filter)
+
+
+@Client.on_message(log_guard, group=-1)
 async def cache_messages(client, message: Message):
     """Mencatat setiap pesan masuk ke memori untuk Anti-Delete."""
     if not message.chat or not message.id:
@@ -30,6 +57,11 @@ async def on_deleted(client, messages):
     for msg in messages:
         if not msg or not hasattr(msg, "chat") or not msg.chat or not hasattr(msg, "id"):
             continue
+            
+        # Jangan log dari channel log sendiri
+        if msg.chat.id == client.log_channel:
+            continue
+
         chat_key = f"{msg.chat.id}_{msg.id}"
         if chat_key in client.db.msg_cache:
             cached = client.db.msg_cache[chat_key]
@@ -43,7 +75,7 @@ async def on_deleted(client, messages):
             del client.db.msg_cache[chat_key]
 
 
-@Client.on_edited_message(filters.all & ~filters.me, group=-3)
+@Client.on_edited_message(log_guard, group=-3)
 async def on_edited(client, message: Message):
     """Mendeteksi pesan yang diedit dan mengirim laporan ke LOG_CHANNEL."""
     is_log_enabled = await client.db.get("anti_edit", True)
