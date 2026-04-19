@@ -9,9 +9,28 @@ PLUGINS_PER_PAGE = COLUMNS * ROWS
 DEFAULT_BANNER = "resources/banner.jpg"
 
 
-async def get_banner_path(db):
+async def get_banner_path(client, db):
     """Ambil path banner dari database atau gunakan default."""
-    return await db.get("help_banner", DEFAULT_BANNER)
+    banner = await db.get("help_banner")
+    if banner:
+        return banner
+
+    # Jika tidak ada di DB, cek default_banner_file_id
+    default_fid = await db.get("default_banner_file_id")
+    if default_fid:
+        return default_fid
+
+    # Jika belum ada file_id, upload dulu (sekali saja)
+    if hasattr(client, "log_channel"):
+        try:
+            msg = await client.send_photo(client.log_channel, DEFAULT_BANNER)
+            default_fid = msg.photo.file_id
+            await db.set("default_banner_file_id", default_fid)
+            return default_fid
+        except Exception:
+            pass
+
+    return DEFAULT_BANNER
 
 
 # --- DATA HELPERS ---
@@ -210,7 +229,10 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
 
     elif data == "close_db":
         await callback_query.answer("🗑 Menutup...")
-        await callback_query.message.delete()
+        if callback_query.message:
+            await callback_query.message.delete()
+        else:
+            await callback_query.edit_message_caption("❌ Menu ditutup.")
 
     elif data == "page_info":
         await callback_query.answer("Klik Prev/Next untuk menggeser.", show_alert=True)

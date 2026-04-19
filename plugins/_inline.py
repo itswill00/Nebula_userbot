@@ -1,6 +1,7 @@
 from hydrogram.types import (
     InlineQuery,
-    InlineQueryResultPhoto
+    InlineQueryResultPhoto,
+    InlineQueryResultCachedPhoto
 )
 from .assistant import get_banner_path
 
@@ -13,7 +14,7 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
     query = inline_query.query.lower()
 
     if query == "help":
-        banner = await get_banner_path(userbot.db)
+        banner = await get_banner_path(userbot, userbot.db)
         text = (
             "🌌 **Nebula Engine - Help Menu**\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
@@ -22,16 +23,27 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
         )
         markup = await get_help_markup(page=0)
 
+        # Cek apakah banner adalah URL atau file_id/local path
+        if isinstance(banner, str) and (banner.startswith("http") or "/" in banner):
+            result = InlineQueryResultPhoto(
+                photo_url=banner,
+                title="Nebula Help Menu",
+                description="Daftar plugin dan perintah Nebula.",
+                caption=text,
+                reply_markup=markup
+            )
+        else:
+            # Jika bukan URL/Path, anggap sebagai file_id
+            result = InlineQueryResultCachedPhoto(
+                photo_file_id=banner,
+                title="Nebula Help Menu",
+                description="Daftar plugin dan perintah Nebula.",
+                caption=text,
+                reply_markup=markup
+            )
+
         await inline_query.answer(
-            results=[
-                InlineQueryResultPhoto(
-                    photo_url=banner,
-                    title="Nebula Help Menu",
-                    description="Daftar plugin dan perintah Nebula.",
-                    caption=text,
-                    reply_markup=markup
-                )
-            ],
+            results=[result],
             cache_time=1
         )
 
