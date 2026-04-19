@@ -223,46 +223,51 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
 
     elif data.startswith("sw_banner"):
         # sw_banner|action|msg_id
+        await callback_query.answer("◈ Memproses...")
         parts = data.split("|")
         action, msg_id = parts[1], int(parts[2])
         
-        await callback_query.edit_message_text("◈ Memproses visual...")
-        
         try:
+            await callback_query.edit_message_text("◈ Mengunduh & Sinkronisasi visual...")
+            
             # 1. Ambil pesan asli yang berisi foto
             source_msg = await client.get_messages(callback_query.message.chat.id, msg_id)
-            if not (source_msg.photo or source_msg.document):
-                return await callback_query.edit_message_text("❌ Media kadaluarsa.")
+            if not source_msg or not (source_msg.photo or source_msg.document):
+                return await callback_query.edit_message_text("❌ Media kadaluarsa atau tidak ditemukan.")
 
-            # 2. Setup Folder
-            banners_dir = os.path.join(os.getcwd(), "resources", "banners")
+            # 2. Setup Folder (Robust Path)
+            banners_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources", "banners")
             if not os.path.exists(banners_dir):
-                os.makedirs(banners_dir)
+                os.makedirs(banners_dir, exist_ok=True)
 
             # 3. Eksekusi Aksi
             if action == "replace":
-                # Hapus semua yang ada
+                # Hapus semua yang ada untuk mode Statis
                 for f in os.listdir(banners_dir):
-                    os.remove(os.path.join(banners_dir, f))
+                    try:
+                        os.remove(os.path.join(banners_dir, f))
+                    except Exception:
+                        pass
                 target_path = os.path.join(banners_dir, "cosmos.png")
             else:
-                # Tambah koleksi (random name)
+                # Tambah koleksi (Shifting Cosmos mode)
                 target_path = os.path.join(banners_dir, f"user_{int(time.time())}.png")
 
             # 4. Download & Simpan
             await source_msg.download(file_name=target_path)
             
-            # 5. Reset Cache Database agar visual baru langsung aktif
-            await userbot.db.delete("banner_file_id")
-            await userbot.db.delete("banner_file_ids")
+            # 5. Reset Cache Database secara menyeluruh
+            if hasattr(userbot, "db"):
+                await userbot.db.delete("banner_file_id")
+                await userbot.db.delete("banner_file_ids")
             
             await callback_query.edit_message_text(
                 "✅ **Banner Diaktifkan.**\n"
-                f"Tersimpan sebagai: `{os.path.basename(target_path)}`\n\n"
-                "Restart Nebula untuk memperbarui cache startup."
+                f"File: `{os.path.basename(target_path)}`\n\n"
+                "Silakan restart Nebula (`.restart`) untuk sinkronisasi startup."
             )
         except Exception as e:
-            await callback_query.edit_message_text(f"❌ Gagal: {e}")
+            await callback_query.edit_message_text(f"❌ Gagal: {str(e)}")
 
     elif data.startswith("all_plugins"):
         await callback_query.answer()
