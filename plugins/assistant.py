@@ -1,5 +1,4 @@
 import os
-import math
 from hydrogram import Client, filters
 from hydrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from core.decorators import on_cmd, CMD_HELP
@@ -9,90 +8,81 @@ def chunk_list(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-# --- UI GENERATORS (THE REAL ULTROID STYLE) ---
+# --- MODULAR UI GENERATORS ---
 
-async def get_main_help_menu():
-    """Halaman 0: Menu Utama Kategori (Official, Addons, Settings)."""
-    buttons = [
-        [
-            InlineKeyboardButton("📦 Official Plugins", callback_data="cat_Identity"),
-            InlineKeyboardButton("🛡️ Security Center", callback_data="cat_Security")
-        ],
-        [
-            InlineKeyboardButton("🛠️ System Tools", callback_data="cat_System"),
-            InlineKeyboardButton("⚙️ General Settings", callback_data="cat_Config")
-        ],
-        [
-            InlineKeyboardButton("🗑 Tutup Menu", callback_data="close_db")
-        ]
-    ]
+async def get_main_menu_markup():
+    """Halaman Utama: Daftar Kategori."""
+    # Ambil semua kategori unik dari CMD_HELP
+    categories = sorted(CMD_HELP.keys())
+    buttons = []
+    for row in chunk_list(categories, 2):
+        buttons.append([
+            InlineKeyboardButton(f"📁 {cat}", callback_data=f"cat_{cat}") for cat in row
+        ])
+    buttons.append([InlineKeyboardButton("🗑 Tutup Dashboard", callback_data="close_db")])
     return InlineKeyboardMarkup(buttons)
 
 async def get_plugin_list_markup(category):
-    """Halaman 1: Daftar Nama File Plugin (Grid 3 Kolom) dalam Kategori."""
+    """Halaman Kategori: Daftar Plugin sebagai tombol individu."""
     if category not in CMD_HELP:
         return None
     
     plugins = sorted(CMD_HELP[category].keys())
     buttons = []
     
-    # Grid 3 Kolom berisi nama-nama file plugin (misal: afk, antispam)
-    for row in chunk_list(plugins, 3):
+    # Setiap plugin jadi satu tombol sendiri
+    for row in chunk_list(plugins, 2):
         buttons.append([
-            InlineKeyboardButton(f"• {p} •", callback_data=f"plug_{category}_{p}") for p in row
+            InlineKeyboardButton(f"📦 {p.title()}", callback_data=f"plug_{category}_{p}") for p in row
         ])
     
     buttons.append([InlineKeyboardButton("⬅️ Kembali ke Menu", callback_data="back_to_main")])
     return InlineKeyboardMarkup(buttons)
 
 async def get_plugin_detail_markup(client_parent, category, plugin_name):
-    """Halaman 2: Detail Perintah di dalam Plugin & Tombol Khusus (Jika Ada)."""
+    """Halaman Plugin: Detail penggunaan & tombol kontrol spesifik plugin tersebut."""
     buttons = []
     
-    # 1. Tambahkan tombol toggle jika plugin ini punya fungsi khusus (Identity, Security, System)
-    if category == "Security":
-        if plugin_name == "antispam":
-            is_as = await client_parent.db.get("antispam", False)
-            buttons.append([InlineKeyboardButton(f"Anti-Spam: {'✅' if is_as else '❌'}", callback_data="toggle_antispam")])
-        elif plugin_name == "pmpermit":
-            is_pm = await client_parent.db.get("pm_permit_enabled", True)
-            buttons.append([InlineKeyboardButton(f"PM-Permit: {'✅' if is_pm else '❌'}", callback_data="toggle_pm_permit_enabled")])
-        elif plugin_name == "anti_delete" or plugin_name == "assistant": # Asumsi toggle anti_delete
-            is_ad = await client_parent.db.get("anti_delete", True)
-            buttons.append([InlineKeyboardButton(f"Anti-Delete: {'✅' if is_ad else '❌'}", callback_data="toggle_anti_delete")])
+    # Tombol Kontrol Spesifik per Plugin
+    if plugin_name == "antispam":
+        is_as = await client_parent.db.get("antispam", False)
+        buttons.append([InlineKeyboardButton(f"Anti-Spam: {'✅' if is_as else '❌'}", callback_data="toggle_antispam")])
     
-    elif category == "Identity" and plugin_name == "afk":
+    elif plugin_name == "pmpermit":
+        is_pm = await client_parent.db.get("pm_permit_enabled", True)
+        buttons.append([InlineKeyboardButton(f"PM-Permit: {'✅' if is_pm else '❌'}", callback_data="toggle_pm_permit_enabled")])
+    
+    elif plugin_name == "afk":
         afk_data = await client_parent.db.get("afk", {"is_afk": False})
         buttons.append([InlineKeyboardButton(f"Status AFK: {'Aktif 💤' if afk_data.get('is_afk') else 'Online ⚡'}", callback_data="info_afk")])
 
-    elif category == "System" and plugin_name == "system":
+    elif plugin_name == "system":
         lang = await client_parent.db.get("lang", "id")
         buttons.append([InlineKeyboardButton(f"Bahasa: {lang.upper()}", callback_data="toggle_lang_switch")])
+        
+    elif plugin_name == "tools":
+        # Contoh tombol tambahan untuk plugin tools
+        buttons.append([InlineKeyboardButton("☁️ Weather Settings", callback_data="info_tools")])
 
-    # 2. Navigasi Kembali ke daftar plugin dalam kategori tersebut
-    buttons.append([InlineKeyboardButton("⬅️ Kembali ke Daftar", callback_data=f"cat_{category}")])
+    # Tombol Kembali ke daftar plugin di kategori yang sama
+    buttons.append([InlineKeyboardButton(f"⬅️ Kembali ke {category}", callback_data=f"cat_{category}")])
     
     return InlineKeyboardMarkup(buttons)
 
 # --- COMMANDS ---
 
-@Client.on_message(on_cmd("db", category="Config", info="Nebula Modular Dashboard (Ultroid Style)."))
+@Client.on_message(on_cmd("db", category="Config", info="Pusat Kendali Modular Nebula."))
 async def open_dashboard(client, message: Message):
     if not client.assistant:
-        return await client.fast_edit(message, "✦ Bot Assistant belum aktif.")
+        return await client.fast_edit(message, "✦ Bot Assistant tidak aktif.")
     
-    text = (
-        "🌌 **Nebula Engine Dashboard**\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        "Pilih kategori modul di bawah ini untuk mengelola asisten Anda."
-    )
-    markup = await get_main_help_menu()
-    
+    text = "🛠 **Nebula Engine - Dashboard**\nPilih kategori untuk mengelola fitur bot Anda:"
+    markup = await get_main_menu_markup()
     try:
         await client.assistant.send_message(message.chat.id, text, reply_markup=markup)
         await message.delete()
     except Exception:
-        await client.fast_edit(message, "⚠️ Gagal mengirim Dashboard via Assistant.")
+        await client.fast_edit(message, "⚠️ Gagal membuka dashboard.")
 
 # --- CALLBACK HANDLERS ---
 
@@ -103,80 +93,73 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
     if callback_query.from_user.id != me.id:
         return await callback_query.answer("🚫 Akses Ditolak.", show_alert=True)
 
-    # 1. Navigasi Kategori (Back to Main)
+    # 1. Navigasi ke Menu Utama
     if data == "back_to_main":
         await callback_query.answer()
-        text = "🌌 **Nebula Engine Dashboard**\n━━━━━━━━━━━━━━━━━━━━\nPilih kategori modul di bawah ini:"
-        await callback_query.edit_message_text(text, reply_markup=await get_main_help_menu())
+        await callback_query.edit_message_text(
+            "🛠 **Nebula Engine - Dashboard**\nPilih kategori untuk mengelola fitur bot Anda:",
+            reply_markup=await get_main_menu_markup()
+        )
 
-    # 2. Navigasi Daftar Plugin dalam Kategori
+    # 2. Navigasi ke Daftar Plugin (Modul)
     elif data.startswith("cat_"):
         await callback_query.answer()
         category = data.replace("cat_", "")
-        text = f"📦 **Modul Kategori:** `{category}`\n━━━━━━━━━━━━━━━━━━━━\nPilih plugin (nama file) untuk melihat detail perintah."
-        markup = await get_plugin_list_markup(category)
-        if markup:
-            await callback_query.edit_message_text(text, reply_markup=markup)
-        else:
-            await callback_query.answer("Belum ada plugin di kategori ini.", show_alert=True)
+        text = f"📂 **Kategori:** `{category}`\nPilih plugin di bawah untuk melihat cara pakai & pengaturan:"
+        await callback_query.edit_message_text(text, reply_markup=await get_plugin_list_markup(category))
 
-    # 3. Navigasi Detail Perintah di dalam Plugin
+    # 3. Navigasi ke Detail Plugin Tertentu
     elif data.startswith("plug_"):
         await callback_query.answer()
         parts = data.split("_", 2)
         category, plugin_name = parts[1], parts[2]
         
+        # Ambil info perintah dari CMD_HELP
         commands_info = CMD_HELP.get(category, {}).get(plugin_name, {})
-        text = f"📦 **Plugin:** `{plugin_name}`\n"
-        text += f"📂 **Kategori:** `{category}`\n"
-        text += "━━━━━━━━━━━━━━━━━━━━\n"
+        help_text = f"📦 **Plugin:** `{plugin_name.upper()}`\n"
+        help_text += f"📂 **Kategori:** `{category}`\n"
+        help_text += "━━━━━━━━━━━━━━━━━━━━\n"
+        help_text += "**Cara Penggunaan:**\n"
         for cmd, info in commands_info.items():
-            text += f"• `.{cmd}` : {info}\n"
+            help_text += f"• `.{cmd}` : {info}\n"
         
-        markup = await get_plugin_detail_markup(client.parent, category, plugin_name)
-        await callback_query.edit_message_text(text, reply_markup=markup)
+        await callback_query.edit_message_text(
+            help_text, 
+            reply_markup=await get_plugin_detail_markup(client.parent, category, plugin_name)
+        )
 
-    # 4. Logika Toggle Khusus
+    # 4. Logika Toggle (On/Off)
     elif data.startswith("toggle_"):
         key = data.replace("toggle_", "")
         await callback_query.answer("⚡ Diupdate...")
         
-        # Penanganan Toggle Dinamis
+        # Update Database
         if key == "lang_switch":
-            current = await client.parent.db.get("lang", "id")
-            await client.parent.db.set("lang", "en" if current == "id" else "id")
+            curr = await client.parent.db.get("lang", "id")
+            await client.parent.db.set("lang", "en" if curr == "id" else "id")
+            # Refresh UI (Asumsi System/system)
             await callback_query.edit_message_reply_markup(reply_markup=await get_plugin_detail_markup(client.parent, "System", "system"))
         else:
-            current = await client.parent.db.get(key, (True if key == "anti_delete" else False))
-            await client.parent.db.set(key, not current)
-            
-            # Coba deteksi kategori untuk refresh otomatis (Paling sering di Security)
-            # Ini bisa dioptimalkan dengan menyimpan state di callback_data jika perlu
-            await callback_query.edit_message_reply_markup(reply_markup=await get_plugin_detail_markup(client.parent, "Security", "pmpermit" if "pm" in key else "antispam"))
+            curr = await client.parent.db.get(key, False)
+            await client.parent.db.set(key, not curr)
+            # Refresh UI (Deteksi otomatis plugin dari key)
+            p_name = "pmpermit" if "pm" in key else ("antispam" if "spam" in key else "assistant")
+            await callback_query.edit_message_reply_markup(reply_markup=await get_plugin_detail_markup(client.parent, "Security", p_name))
 
-    # 5. Kontrol & Info
+    # 5. Kontrol Dasar
     elif data == "close_db":
-        await callback_query.answer("🗑 Ditutup.")
+        await callback_query.answer("🗑 Dashboard ditutup.")
         await callback_query.message.delete()
     
-    elif data == "info_afk":
-        await callback_query.answer("Gunakan perintah .afk untuk mengubah status.", show_alert=True)
+    elif data.startswith("info_"):
+        await callback_query.answer("Info: Gunakan perintah teks untuk pengaturan lebih lanjut.", show_alert=True)
 
 # --- CONTACT BOT LOGIC ---
 async def assistant_contact_handler(client, message: Message):
-    """Menangani pesan dari orang asing ke Assistant Bot."""
     me = client.parent.me
-    if message.from_user.id == me.id:
-        return
-
-    log_text = (
-        f"📩 **Pesan Baru di Assistant Bot**\n\n"
-        f"**Dari:** {message.from_user.mention} (`{message.from_user.id}`)\n"
-        f"**Pesan:** {message.text or '[Media]'}"
-    )
-    
+    if message.from_user.id == me.id: return
+    log_text = f"📩 **Pesan Baru di Assistant Bot**\n\n**Dari:** {message.from_user.mention} (`{message.from_user.id}`)\n**Pesan:** {message.text or '[Media]'}"
     try:
         await client.parent.send_message("me", log_text)
         await message.reply("✅ Pesan kamu telah diteruskan ke Bos saya.")
-    except Exception:
-        pass
+    except: pass
