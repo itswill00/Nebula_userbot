@@ -3,42 +3,34 @@ from hydrogram.types import Message
 from core.decorators import on_cmd
 from plugins.assistant import get_main_menu_markup
 
-@Client.on_message(on_cmd("help", category="Config", info="Menampilkan menu bantuan interaktif modular."))
+@Client.on_message(on_cmd("help", category="Config", info="Menampilkan menu bantuan modular bergaya Ultroid."))
 async def help_menu(client, message: Message):
-    """Menampilkan menu bantuan gaya Ultroid/Userge (Modular + Paginated)."""
+    """Memicu menu bantuan asisten."""
     if not client.assistant:
         return await client.fast_edit(message, "⚠️ **Kesalahan:** Bot Assistant tidak aktif.")
 
     text = (
         "🌌 **Nebula Engine - Help Menu**\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
-        "Jelajahi plugin berdasarkan kategori di bawah ini.\n"
-        "Setiap plugin memiliki halaman bantuan dan kontrolnya sendiri."
+        "Jelajahi plugin berdasarkan kategori atau lihat semua utilitas sekaligus.\n"
+        "Gunakan tombol di bawah untuk navigasi."
     )
     
     markup = await get_main_menu_markup()
     
     try:
-        # Userbot memicu asisten untuk mengirim menu via inline
-        # Catatan: Kita gunakan send_message via asisten ke chat yang sama
-        # (Aman karena asisten biasanya ada di grup atau PM)
-        await client.assistant.send_message(
-            message.chat.id, 
-            text, 
-            reply_markup=markup
+        # Kirim melalui asisten agar mendapatkan label 'via @bot'
+        # Gunakan bot_username untuk pemicu inline
+        bot_username = client.assistant.me.username
+        results = await client.get_inline_bot_results(bot_username, "help")
+        
+        await client.send_inline_bot_result(
+            chat_id=message.chat.id,
+            query_id=results.query_id,
+            result_id=results.results[0].id,
+            reply_to_message_id=message.reply_to_message.id if message.reply_to_message else None
         )
         await message.delete()
     except Exception as e:
-        # Fallback jika asisten tidak bisa kirim pesan (misal: bukan admin di grup)
-        # Gunakan inline query (seperti yang kita pelajari dari Ultroid)
-        try:
-            bot_username = client.assistant.me.username
-            results = await client.get_inline_bot_results(bot_username, "help")
-            await client.send_inline_bot_result(
-                chat_id=message.chat.id,
-                query_id=results.query_id,
-                result_id=results.results[0].id
-            )
-            await message.delete()
-        except:
-            await client.fast_edit(message, f"❌ **Gagal:** Asisten tidak dapat merespons di chat ini.")
+        # Fallback jika asisten tidak bisa kirim pesan
+        await client.fast_edit(message, f"❌ **Gagal memicu Menu:**\n`{str(e)}`")

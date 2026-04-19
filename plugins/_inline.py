@@ -1,8 +1,10 @@
 from hydrogram import Client
 from hydrogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent
-from plugins.assistant import get_help_markup
 
 async def assistant_inline_handler(client, inline_query: InlineQuery):
+    # Impor lokal untuk menghindari potensi circular import
+    from .assistant import get_help_markup
+    
     query = inline_query.query.lower()
     
     if query == "help":

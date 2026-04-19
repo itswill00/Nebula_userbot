@@ -1,5 +1,5 @@
 import warnings
-# Bungkam peringatan versi Python dari Google agar terminal tetap bersih
+# Bungkam peringatan versi Python dari Google agar terminal bersih
 warnings.filterwarnings("ignore", category=FutureWarning, module="google.api_core")
 
 import uvloop
@@ -18,11 +18,23 @@ if __name__ == "__main__":
     if bot.assistant:
         bot.assistant.parent = bot
         
-        # 2. Handler untuk Callback Dashboard & Help (Pola cat, pdet, utog, back, close)
+        # 1. Pesan Masuk (Contact Bot)
         bot.assistant.add_handler(
-            CallbackQueryHandler(assistant_callback_handler, filters.regex(r"^cat_|^pdet_|^utog_|^back_to_main$|^close_db$"))
+            MessageHandler(assistant_contact_handler, filters.private & ~filters.bot)
         )
-        bot.assistant.add_handler(InlineQueryHandler(assistant_inline_handler))
+        
+        # 2. SEMUA Callback (Help, Dashboard, Toggles, Navigasi)
+        bot.assistant.add_handler(
+            CallbackQueryHandler(
+                assistant_callback_handler, 
+                filters.regex(r"^(cat_|all_|pdet_|utog_|back_|close_|info_)")
+            )
+        )
+
+        # 3. Inline Query (@bot help)
+        bot.assistant.add_handler(
+            InlineQueryHandler(assistant_inline_handler)
+        )
 
     print("✨ \033[96mNebula Ready! Memulai sistem...\033[0m")
     bot.run()

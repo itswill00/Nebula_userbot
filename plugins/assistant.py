@@ -10,87 +10,97 @@ PLUGINS_PER_PAGE = COLUMNS * ROWS
 
 # --- DATA HELPERS ---
 
-def get_plugins_by_category(category):
-    """Ambil daftar plugin di bawah kategori tertentu."""
-    if category not in CMD_HELP:
-        return []
-    return sorted(CMD_HELP[category].keys())
+def get_all_plugins_list():
+    """Ambil semua plugin dari semua kategori dalam satu list flat."""
+    all_plugins = []
+    for cat in CMD_HELP:
+        for plug in CMD_HELP[cat]:
+            if (plug, cat) not in all_plugins:
+                all_plugins.append((plug, cat))
+    return sorted(all_plugins)
 
-def paginate_plugins(plugins, page):
-    """Membagi plugin ke dalam halaman."""
+def paginate_list(items, page):
+    """Membagi list ke dalam halaman."""
     start = page * PLUGINS_PER_PAGE
     stop = start + PLUGINS_PER_PAGE
-    return plugins[start:stop], (len(plugins) - 1) // PLUGINS_PER_PAGE
+    return items[start:stop], (len(items) - 1) // PLUGINS_PER_PAGE
 
 # --- MARKUP GENERATORS ---
 
+async def get_help_markup(page=0):
+    """Entry point utama untuk menu bantuan (Main Menu)."""
+    return await get_main_menu_markup()
+
 async def get_main_menu_markup():
-    """Halaman Awal: Pilih Kategori."""
-    categories = sorted(CMD_HELP.keys())
-    buttons = []
-    # Buat grid kategori (2 kolom)
-    for i in range(0, len(categories), 2):
-        row = []
-        for cat in categories[i:i+2]:
-            count = len(CMD_HELP[cat])
-            row.append(InlineKeyboardButton(f"📁 {cat} ({count})", callback_data=f"cat_{cat}_0"))
-        buttons.append(row)
-    
-    buttons.append([InlineKeyboardButton("🗑 Tutup Menu", callback_data="close_db")])
+    """Halaman Awal: Menu Utama Bergaya Ultroid."""
+    buttons = [
+        [
+            InlineKeyboardButton("🛠️ Utilities", callback_data="all_plugins_0"),
+            InlineKeyboardButton("🛡️ Security", callback_data="cat_Security_0")
+        ],
+        [
+            InlineKeyboardButton("⚙️ Settings", callback_data="cat_Config_0"),
+            InlineKeyboardButton("👤 Identity", callback_data="cat_Identity_0")
+        ],
+        [
+            InlineKeyboardButton("🗑 Tutup Menu", callback_data="close_db")
+        ]
+    ]
     return InlineKeyboardMarkup(buttons)
 
 async def get_plugin_grid_markup(category, page):
-    """Halaman Grid Plugin: Daftar Plugin dalam Kategori dengan Pagination."""
-    plugins = get_plugins_by_category(category)
-    page_plugins, max_page = paginate_plugins(plugins, page)
+    """Grid plugin untuk kategori tertentu."""
+    if category == "ALL":
+        plugins = get_all_plugins_list()
+        callback_prefix = "all_plugins"
+    else:
+        plugins = [(p, category) for p in sorted(CMD_HELP.get(category, {}).keys())]
+        callback_prefix = f"cat_{category}"
+
+    page_plugins, max_page = paginate_list(plugins, page)
     
     buttons = []
-    # Buat Grid Plugin
     for i in range(0, len(page_plugins), COLUMNS):
         row = [
-            InlineKeyboardButton(p.title(), callback_data=f"pdet_{category}_{p}_{page}") 
+            InlineKeyboardButton(p[0].title(), callback_data=f"pdet_{p[1]}_{p[0]}_{page}_{'ALL' if category == 'ALL' else category}") 
             for p in page_plugins[i:i+COLUMNS]
         ]
         buttons.append(row)
     
-    # Tombol Navigasi Halaman
+    # Navigasi Halaman
     nav = []
-    if page > 0:
-        nav.append(InlineKeyboardButton("« Prev", callback_data=f"cat_{category}_{page-1}"))
-    else:
-        nav.append(InlineKeyboardButton("« End", callback_data=f"cat_{category}_{max_page}"))
-        
-    nav.append(InlineKeyboardButton(f"{page+1}/{max_page+1}", callback_data="page_info"))
+    prev_page = page - 1 if page > 0 else max_page
+    next_page = page + 1 if page < max_page else 0
     
-    if page < max_page:
-        nav.append(InlineKeyboardButton("Next »", callback_data=f"cat_{category}_{page+1}"))
-    else:
-        nav.append(InlineKeyboardButton("First »", callback_data=f"cat_{category}_0"))
+    nav.append(InlineKeyboardButton("« Prev", callback_data=f"{callback_prefix}_{prev_page}"))
+    nav.append(InlineKeyboardButton(f"{page+1}/{max_page+1}", callback_data="page_info"))
+    nav.append(InlineKeyboardButton("Next »", callback_data=f"{callback_prefix}_{next_page}"))
     
     buttons.append(nav)
     buttons.append([InlineKeyboardButton("⬅️ Kembali ke Menu", callback_data="back_to_main")])
     return InlineKeyboardMarkup(buttons)
 
-async def get_plugin_detail_markup(client_parent, category, plugin_name, back_page):
-    """Halaman Detail: Info Perintah + Tombol Kontrol Plugin."""
+async def get_plugin_detail_markup(client_parent, category, plugin_name, back_page, back_cat):
+    """Halaman Detail Plugin."""
     buttons = []
     
-    # LOGIKA KONTROL: Tambahkan tombol toggle jika plugin memiliki state di DB
-    # Kita buat pemetaan manual berdasarkan plugin yang kita tahu punya kontrol
+    # Logika Kontrol
     if plugin_name == "antispam":
         state = await client_parent.db.get("antispam", False)
-        buttons.append([InlineKeyboardButton(f"Anti-Spam: {'✅ ON' if state else '❌ OFF'}", callback_data=f"utog_antispam_{category}_{plugin_name}_{back_page}")])
+        buttons.append([InlineKeyboardButton(f"Anti-Spam: {'✅ ON' if state else '❌ OFF'}", callback_data=f"utog_antispam_{category}_{plugin_name}_{back_page}_{back_cat}")])
     elif plugin_name == "pmpermit":
         state = await client_parent.db.get("pm_permit_enabled", True)
-        buttons.append([InlineKeyboardButton(f"PM Permit: {'✅ ON' if state else '❌ OFF'}", callback_data=f"utog_pm_permit_enabled_{category}_{plugin_name}_{back_page}")])
+        buttons.append([InlineKeyboardButton(f"PM Permit: {'✅ ON' if state else '❌ OFF'}", callback_data=f"utog_pm_permit_enabled_{category}_{plugin_name}_{back_page}_{back_cat}")])
     elif plugin_name == "afk":
         afk_data = await client_parent.db.get("afk", {"is_afk": False})
-        buttons.append([InlineKeyboardButton(f"Status: {'AFK 💤' if afk_data.get('is_afk') else 'ONLINE ⚡'}", callback_data="afk_status_info")])
+        state = afk_data.get("is_afk")
+        buttons.append([InlineKeyboardButton(f"Status: {'AFK 💤' if state else 'ONLINE ⚡'}", callback_data="afk_status_info")])
     elif plugin_name == "system":
         lang = await client_parent.db.get("lang", "id")
-        buttons.append([InlineKeyboardButton(f"Bahasa: {lang.upper()}", callback_data=f"utog_lang_switch_{category}_{plugin_name}_{back_page}")])
+        buttons.append([InlineKeyboardButton(f"Bahasa: {lang.upper()}", callback_data=f"utog_lang_switch_{category}_{plugin_name}_{back_page}_{back_cat}")])
 
-    buttons.append([InlineKeyboardButton("⬅️ Kembali", callback_data=f"cat_{category}_{back_page}")])
+    back_callback = f"all_plugins_{back_page}" if back_cat == "ALL" else f"cat_{back_cat}_{back_page}"
+    buttons.append([InlineKeyboardButton("⬅️ Kembali", callback_data=back_callback)])
     return InlineKeyboardMarkup(buttons)
 
 # --- HANDLERS ---
@@ -102,7 +112,6 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
     if callback_query.from_user.id != userbot.me.id:
         return await callback_query.answer("🚫 Akses Ditolak.", show_alert=True)
 
-    # 1. Menu Utama
     if data == "back_to_main":
         await callback_query.answer()
         await callback_query.edit_message_text(
@@ -110,18 +119,27 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
             reply_markup=await get_main_menu_markup()
         )
 
-    # 2. Grid Plugin (Categorized + Paginated)
+    elif data.startswith("all_plugins_"):
+        await callback_query.answer()
+        page = int(data.split("_")[-1])
+        await callback_query.edit_message_text(
+            "🛠 **All Utilities**\nGeser ke kiri/kanan untuk melihat semua plugin:",
+            reply_markup=await get_plugin_grid_markup("ALL", page)
+        )
+
     elif data.startswith("cat_"):
         await callback_query.answer()
         _, category, page = data.split("_")
         page = int(page)
-        text = f"📂 **Kategori:** `{category}`\nPilih plugin untuk detail & kontrol:"
-        await callback_query.edit_message_text(text, reply_markup=await get_plugin_grid_markup(category, page))
+        await callback_query.edit_message_text(
+            f"📂 **Kategori:** `{category}`\nPilih plugin untuk detail & kontrol:",
+            reply_markup=await get_plugin_grid_markup(category, page)
+        )
 
-    # 3. Detail Plugin
     elif data.startswith("pdet_"):
         await callback_query.answer()
-        _, category, plugin_name, back_page = data.split("_")
+        parts = data.split("_")
+        category, plugin_name, back_page, back_cat = parts[1], parts[2], int(parts[3]), parts[4]
         
         commands = CMD_HELP.get(category, {}).get(plugin_name, {})
         help_text = f"📦 **Plugin:** `{plugin_name.upper()}`\n"
@@ -134,13 +152,13 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         
         await callback_query.edit_message_text(
             help_text, 
-            reply_markup=await get_plugin_detail_markup(userbot, category, plugin_name, back_page)
+            reply_markup=await get_plugin_detail_markup(userbot, category, plugin_name, back_page, back_cat)
         )
 
-    # 4. Logika Toggle (Control Center)
     elif data.startswith("utog_"):
         await callback_query.answer("⚡ Diupdate...")
-        _, key, category, plugin_name, back_page = data.split("_")
+        parts = data.split("_")
+        key, category, plugin_name, back_page, back_cat = parts[1], parts[2], parts[3], int(parts[4]), parts[5]
         
         if key == "lang_switch":
             curr = await userbot.db.get("lang", "id")
@@ -149,23 +167,21 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
             curr = await userbot.db.get(key, False)
             await userbot.db.set(key, not curr)
         
-        # Refresh halaman detail
         await callback_query.edit_message_reply_markup(
-            reply_markup=await get_plugin_detail_markup(userbot, category, plugin_name, back_page)
+            reply_markup=await get_plugin_detail_markup(userbot, category, plugin_name, back_page, back_cat)
         )
 
-    # 5. Kontrol Lainnya
     elif data == "close_db":
         await callback_query.answer("🗑 Menutup...")
         await callback_query.message.delete()
     
     elif data == "page_info":
-        await callback_query.answer("Gunakan tombol panah untuk berpindah halaman.", show_alert=True)
+        await callback_query.answer("Klik Prev/Next untuk menggeser.", show_alert=True)
     
     elif data == "afk_status_info":
-        await callback_query.answer("Status AFK hanya bisa diaktifkan/matikan via perintah .afk", show_alert=True)
+        await callback_query.answer("Status AFK diatur via .afk", show_alert=True)
 
-# --- CONTACT HANDLER (Menjaga Integrasi main.py) ---
+# --- CONTACT HANDLER ---
 async def assistant_contact_handler(client, message: Message):
     me = client.parent.me
     if message.from_user.id == me.id: return
@@ -174,3 +190,5 @@ async def assistant_contact_handler(client, message: Message):
         await client.parent.send_message("me", log_text)
         await message.reply("✅ Pesan kamu telah diteruskan ke Bos saya.")
     except: pass
+
+__all__ = ['get_help_markup', 'get_main_menu_markup', 'assistant_callback_handler', 'assistant_contact_handler']
