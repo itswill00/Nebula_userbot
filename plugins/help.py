@@ -21,7 +21,6 @@ async def help_menu(client, message: Message):
             result_id=results.results[0].id,
             reply_to_message_id=message.reply_to_message.id if message.reply_to_message else None
         )
-        await message.delete()
     except Exception as e:
         # Fallback jika asisten tidak bisa kirim pesan
         await client.fast_edit(message, f"❌ **Gagal memicu Menu:**\n`{str(e)}`")
