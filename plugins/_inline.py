@@ -1,18 +1,19 @@
 from hydrogram.types import (
     InlineQuery,
-    InlineQueryResultPhoto,
-    InputTextMessageContent
+    InlineQueryResultPhoto
 )
-from .assistant import BANNER_PATH
+from .assistant import get_banner_path
 
 
 async def assistant_inline_handler(client, inline_query: InlineQuery):
     # Impor lokal untuk menghindari potensi circular import
     from .assistant import get_help_markup
 
+    userbot = client.parent if hasattr(client, "parent") else client
     query = inline_query.query.lower()
 
     if query == "help":
+        banner = await get_banner_path(userbot.db)
         text = (
             "🌌 **Nebula Engine - Help Menu**\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
@@ -24,7 +25,7 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
         await inline_query.answer(
             results=[
                 InlineQueryResultPhoto(
-                    photo_url=BANNER_PATH,
+                    photo_url=banner,
                     title="Nebula Help Menu",
                     description="Daftar plugin dan perintah Nebula.",
                     caption=text,

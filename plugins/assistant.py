@@ -6,7 +6,12 @@ from core.decorators import CMD_HELP
 COLUMNS = 3
 ROWS = 4
 PLUGINS_PER_PAGE = COLUMNS * ROWS
-BANNER_PATH = "resources/banner.jpg"
+DEFAULT_BANNER = "resources/banner.jpg"
+
+
+async def get_banner_path(db):
+    """Ambil path banner dari database atau gunakan default."""
+    return await db.get("help_banner", DEFAULT_BANNER)
 
 
 # --- DATA HELPERS ---
@@ -47,6 +52,7 @@ async def get_main_menu_markup():
             InlineKeyboardButton("👤 Identity", callback_data="cat_Identity_0")
         ],
         [
+            InlineKeyboardButton("🖼️ Ganti Banner", callback_data="change_banner"),
             InlineKeyboardButton("🗑 Tutup Menu", callback_data="close_db")
         ]
     ]
@@ -137,6 +143,15 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
             reply_markup=await get_main_menu_markup()
         )
 
+    elif data == "change_banner":
+        await callback_query.answer()
+        await userbot.db.set("waiting_for_banner", True)
+        await callback_query.edit_message_caption(
+            "🖼️ **Ganti Banner Help Menu**\n\n"
+            "Silakan kirimkan sebuah **Foto** ke bot ini untuk dijadikan banner baru.",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Batal", callback_data="back_to_main")]])
+        )
+
     elif data.startswith("all_plugins_"):
         await callback_query.answer()
         page = int(data.split("_")[-1])
@@ -206,19 +221,36 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
 
 # --- CONTACT HANDLER ---
 async def assistant_contact_handler(client, message: Message):
-    me = client.parent.me
+    userbot = client.parent if hasattr(client, "parent") else client
+    me = userbot.me
+
+    # Cek apakah ini pesan dari owner untuk ganti banner
+    if message.from_user.id == me.id:
+        if await userbot.db.get("waiting_for_banner"):
+            if message.photo:
+                await userbot.db.set("help_banner", message.photo.file_id)
+                await userbot.db.delete("waiting_for_banner")
+                return await message.reply("✅ **Banner Help Menu berhasil diperbarui!**")
+            elif message.text == "/cancel" or message.text == "Batal":
+                await userbot.db.delete("waiting_for_banner")
+                return await message.reply("❌ **Penggantian banner dibatalkan.**")
+
     if message.from_user.id == me.id:
         return
+
     log_text = (
         f"📩 **Pesan Baru di Assistant Bot**\n\n"
         f"**Dari:** {message.from_user.mention} (`{message.from_user.id}`)\n"
         f"**Pesan:** {message.text or '[Media]'}"
     )
     try:
-        await client.parent.send_message("me", log_text)
+        await userbot.send_message("me", log_text)
         await message.reply("✅ Pesan kamu telah diteruskan ke Bos saya.")
     except Exception:
         pass
 
 
-__all__ = ['get_help_markup', 'get_main_menu_markup', 'assistant_callback_handler', 'assistant_contact_handler']
+__all__ = [
+    'get_help_markup', 'get_main_menu_markup', 'assistant_callback_handler',
+    'assistant_contact_handler', 'get_banner_path'
+]
