@@ -9,17 +9,30 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Log format yang lebih bersih untuk dibaca di Telegram
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("nebula.log"),
+        logging.StreamHandler()
+    ]
+)
 
 class NebulaBot(Client):
     def __init__(self):
+        # Pastikan direktori penting ada
+        for folder in ["downloads", "strings", "plugins"]:
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+
         super().__init__(
             name="nebula",
             api_id=int(os.getenv("API_ID")),
             api_hash=os.getenv("API_HASH"),
             plugins=dict(root="plugins"),
             device_model="Nebula Master",
-            app_version="1.2.0"
+            app_version="1.3.0"
         )
         self.db = LocalDB()
         self.strings = {}
@@ -38,12 +51,15 @@ class NebulaBot(Client):
             )
 
     def _load_all_strings(self):
-        if not os.path.exists("strings"):
-            os.makedirs("strings")
+        if not os.listdir("strings"):
+            # Fallback jika folder kosong (mencegah crash)
+            self.strings["id"] = {"PROCESSING": "`Memproses...`"}
+            return
+
         for lang_file in os.listdir("strings"):
             if lang_file.endswith(".json"):
                 lang_code = lang_file.split(".")[0]
-                with open(f"strings/{lang_file}", "r") as f:
+                with open(f"strings/{lang_file}", "r", encoding="utf-8") as f:
                     self.strings[lang_code] = json.load(f)
 
     async def get_string(self, key, default=None):
@@ -62,14 +78,15 @@ class NebulaBot(Client):
 
     async def start(self):
         await super().start()
-        self.scheduler.start()
+        if not self.scheduler.running:
+            self.scheduler.start()
         if self.assistant:
             await self.assistant.start()
-            logging.info("Assistant Online.")
-        logging.info("Nebula Core Online with Scheduler Active.")
+        logging.info("Nebula Core 1.3.0 started successfully.")
 
     async def stop(self, *args):
         await super().stop()
-        self.scheduler.shutdown()
+        if self.scheduler.running:
+            self.scheduler.shutdown()
         if self.assistant:
             await self.assistant.stop()
