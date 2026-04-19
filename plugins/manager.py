@@ -1,70 +1,82 @@
-import aiohttp
-import importlib
-from hydrogram import Client, filters
+import os
+import sys
+from hydrogram import Client
 from hydrogram.types import Message
-
-PREFIX = "."
-
-
-@Client.on_message(filters.command("load", prefixes=PREFIX) & filters.me)
-async def load_plugin_cmd(client, message: Message):
-    """Memuat plugin yang ada di folder plugins."""
-    if len(message.command) < 2:
-        return await message.edit("`Berikan nama plugin.`")
-
-    name = message.command[1]
-    await message.edit(f"`Loading {name}...`")
-
-    try:
-        importlib.import_module(f"plugins.{name}")
-        await message.edit(f"✅ `Plugin {name} loaded.`")
-    except Exception as e:
-        await message.edit(f"❌ `Error:`\n`{str(e)}`")
+from core.decorators import on_cmd
 
 
-@Client.on_message(filters.command("reload", prefixes=PREFIX) & filters.me)
-async def reload_plugin_cmd(client, message: Message):
-    """Me-reload plugin yang sudah ada di memori."""
-    if len(message.command) < 2:
-        return await message.edit("`Berikan nama plugin.`")
+@Client.on_message(on_cmd("install", category="System", info="Pasang plugin baru dengan membalas file .py."))
+async def install_plugin(client, message: Message):
+    if not message.reply_to_message or not message.reply_to_message.document:
+        return await client.fast_edit(message, "⚠️ **Balas ke file `.py` untuk memasang plugin.**")
 
-    name = message.command[1]
-    await message.edit(f"`Reloading {name}...`")
+    file = message.reply_to_message.document
+    if not file.file_name.endswith(".py"):
+        return await client.fast_edit(message, "⚠️ **Hanya file `.py` yang didukung.**")
 
-    if await client.reload_plugin(name):
-        await message.edit(f"✅ `Plugin {name} reloaded.`")
+    plugin_name = file.file_name
+    plugin_path = os.path.join("plugins", plugin_name)
+
+    if os.path.exists(plugin_path):
+        return await client.fast_edit(message, f"⚠️ **Plugin `{plugin_name}` sudah ada.**")
+
+    await client.fast_edit(message, f"📥 **Mengunduh `{plugin_name}`...**")
+    download_path = await client.download_media(message.reply_to_message, file_name=plugin_path)
+
+    if download_path:
+        await client.fast_edit(message, f"✅ **Berhasil memasang `{plugin_name}`!**\n\n🔄 **Merestart Nebula untuk menerapkan...**")
+        
+        # Simpan status untuk pemulihan pasca restart
+        await client.db.set("restart_info", {
+            "chat_id": message.chat.id,
+            "msg_id": message.id
+        })
+        
+        # Restart
+        os.execl(sys.executable, sys.executable, "main.py")
     else:
-        await message.edit(f"❌ `Gagal me-reload {name}.`")
+        await client.fast_edit(message, "❌ **Gagal mengunduh plugin.**")
 
 
-@Client.on_message(filters.command("install", prefixes=PREFIX) & filters.me)
-async def install_plugin_cmd(client, message: Message):
-    """Instal plugin langsung dari URL."""
+@Client.on_message(on_cmd("uninstall", category="System", info="Hapus plugin yang sudah terpasang."))
+async def uninstall_plugin(client, message: Message):
     if len(message.command) < 2:
-        return await message.edit("`Berikan URL file plugin (.py).`")
+        return await client.fast_edit(message, "⚠️ **Masukkan nama plugin untuk dihapus.**\nContoh: `.uninstall custom_mod` (tanpa .py)")
 
-    url = message.text.split(None, 1)[1]
-    name = url.split("/")[-1]
+    plugin_name = message.command[1]
+    if not plugin_name.endswith(".py"):
+        plugin_name += ".py"
 
-    if not name.endswith(".py"):
-        return await message.edit("`URL harus mengarah ke file .py.`")
+    plugin_path = os.path.join("plugins", plugin_name)
 
-    status = await message.edit(f"`Installing {name}...`")
+    if not os.path.exists(plugin_path):
+        return await client.fast_edit(message, f"❌ **Plugin `{plugin_name}` tidak ditemukan.**")
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                if resp.status == 200:
-                    content = await resp.read()
-                    file_path = f"plugins/{name}"
-                    with open(file_path, "wb") as f:
-                        f.write(content)
-
-                    # Load plugin setelah di-save
-                    plugin_name = name.replace(".py", "")
-                    importlib.import_module(f"plugins.{plugin_name}")
-                    await status.edit(f"✅ `Plugin {name} installed and loaded.`")
-                else:
-                    await status.edit(f"❌ `Download failed: HTTP {resp.status}`")
+        os.remove(plugin_path)
+        await client.fast_edit(message, f"🗑️ **Plugin `{plugin_name}` berhasil dihapus.**\n\n🔄 **Merestart Nebula...**")
+        
+        # Simpan status untuk pemulihan
+        await client.db.set("restart_info", {
+            "chat_id": message.chat.id,
+            "msg_id": message.id
+        })
+        
+        # Restart
+        os.execl(sys.executable, sys.executable, "main.py")
     except Exception as e:
-        await status.edit(f"❌ `Installation error:`\n`{str(e)}`")
+        await client.fast_edit(message, f"❌ **Gagal menghapus plugin:**\n`{e}`")
+
+
+@Client.on_message(on_cmd("plugins", category="System", info="Lihat daftar semua plugin yang aktif."))
+async def list_plugins(client, message: Message):
+    plugin_list = [f for f in os.listdir("plugins") if f.endswith(".py") and not f.startswith("_")]
+    
+    if not plugin_list:
+        return await client.fast_edit(message, "📭 **Tidak ada plugin kustom yang terdeteksi.**")
+
+    text = f"🔌 **Nebula Active Plugins ({len(plugin_list)})**\n\n"
+    for plugin in sorted(plugin_list):
+        text += f"• `{plugin.replace('.py', '')}`\n"
+    
+    await client.fast_edit(message, text)

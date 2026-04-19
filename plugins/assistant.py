@@ -144,6 +144,12 @@ async def get_plugin_detail_markup(
                 callback_data="afk_status_info"
             )
         ])
+    elif plugin_name == "sudo":
+        sudo_users = await client_parent.db.get("sudo_users", [])
+        buttons.append([
+            InlineKeyboardButton(
+                f"Sudo Users: {len(sudo_users)}", callback_data="sudo_list_info")
+        ])
     elif plugin_name == "system":
         lang = await client_parent.db.get("lang", "id")
         cb_data = (
@@ -282,6 +288,13 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
     elif data == "page_info":
         await callback_query.answer(
             "Klik Prev/Next untuk menggeser.", show_alert=True
+        )
+
+    elif data == "sudo_list_info":
+        sudo_users = await userbot.db.get("sudo_users", [])
+        await callback_query.answer(
+            f"Daftar ID: {sudo_users}" if sudo_users else "Belum ada user sudo.",
+            show_alert=True
         )
 
     elif data == "afk_status_info":
