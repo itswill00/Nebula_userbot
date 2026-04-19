@@ -55,6 +55,13 @@ Nebula Engine adheres to high engineering standards:
 - **Type Safety**: Explicit handling of types to ensure runtime stability.
 - **Zero Gimmick**: Focused on functional utility without unnecessary overhead.
 
+## Credits & Acknowledgments
+
+Nebula Engine draws inspiration from several pioneering projects in the Telegram userbot ecosystem. Special thanks to:
+
+- [TeamUltroid/Ultroid](https://github.com/TeamUltroid/Ultroid): For the architectural inspiration and interactive menu concepts.
+- [UsergeTeam/Userge](https://github.com/UsergeTeam/Userge): For the foundation of core logic and modularity patterns.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
