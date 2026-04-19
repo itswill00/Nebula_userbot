@@ -53,12 +53,18 @@ async def open_dashboard(client, message: Message):
         ]
     ]
     
-    await message.delete()
-    await client.assistant.send_message(
-        message.chat.id, 
-        text, 
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
+    try:
+        await client.assistant.send_message(
+            message.chat.id, 
+            text, 
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+        await message.delete()
+    except Exception:
+        # Fallback jika Bot tidak ada di chat
+        await message.edit(
+            f"{text}\n\n⚠️ **Tombol tidak tersedia.** Pastikan Bot Assistant sudah bergabung di chat ini atau gunakan perintah teks `.setting`."
+        )
 
 # Handler untuk Assistant Bot (CallbackQuery)
 async def assistant_callback_handler(client, callback_query: CallbackQuery):

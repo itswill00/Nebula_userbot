@@ -1,51 +1,59 @@
 from hydrogram import Client, filters
 from hydrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from hydrogram.errors import PeerIdInvalid, FloodWait
+import asyncio
 
 PREFIX = "."
 
 @Client.on_message(filters.command("help", prefixes=PREFIX) & filters.me)
 async def help_menu(client, message: Message):
-    """Menampilkan menu bantuan interaktif via Assistant Bot."""
+    """Menampilkan menu bantuan interaktif atau teks fallback."""
     
-    # Jika Assistant tidak aktif, tampilkan teks biasa
-    if not client.assistant:
-        help_text = (
-            "🌌 **Nebula Userbot (Text Mode)**\n\n"
-            "**Commands:**\n"
-            "`.sh`, `.eval`, `.sys`, `.vstk`, `.dl`, `.leech`, `.ask`, `.tr`, `.db`"
-        )
-        return await message.edit(help_text)
+    help_text = (
+        "🌌 **Nebula — Pusat Kendali Kamu**\n\n"
+        "Halo! Mau aku bantu apa hari ini? Pilih kategori di bawah ya."
+    )
 
     # Persiapkan tombol
     buttons = [
         [
-            InlineKeyboardButton("🚀 System", callback_data="help_system"),
+            InlineKeyboardButton("🚀 Sistem", callback_data="help_system"),
             InlineKeyboardButton("🎬 Media", callback_data="help_media")
         ],
         [
             InlineKeyboardButton("🧠 AI Tools", callback_data="help_ai"),
-            InlineKeyboardButton("🛡 Security", callback_data="help_security")
+            InlineKeyboardButton("🛡 Keamanan", callback_data="help_security")
         ],
         [
-            InlineKeyboardButton("⚙️ Settings", callback_data="help_config")
+            InlineKeyboardButton("⚙️ Setelan", callback_data="help_config")
         ]
     ]
 
+    # Jika Assistant tidak aktif, kirim teks biasa
+    if not client.assistant:
+        return await message.edit(
+            f"{help_text}\n\n**Perintah:** `.sh`, `.eval`, `.vstk`, `.dl`, `.ask`, `.db`"
+        )
+
     try:
-        # 1. Hapus pesan perintah (.help)
-        await message.delete()
-        
-        # 2. Perintah Assistant Bot untuk kirim pesan baru dengan tombol
-        # Kita gunakan send_message dari client.assistant
+        # Coba kirim via Assistant Bot (untuk tombol)
         await client.assistant.send_message(
             chat_id=message.chat.id,
-            text="🌌 **Nebula — Pusat Kendali Kamu**\n\nHalo! Mau aku bantu apa hari ini? Pilih kategori di bawah ya.",
+            text=help_text,
             reply_markup=InlineKeyboardMarkup(buttons)
         )
-    except Exception as e:
-        # Fallback jika bot belum masuk grup atau belum di-start di PM
-        bot_info = await client.assistant.get_me()
-        await client.send_message(
-            message.chat.id,
-            f"❌ **Assistant Bot Error:**\n`{str(e)}`\n\nPastikan kamu sudah klik /start di @{bot_info.username}"
+        # Jika berhasil, hapus pesan pemicu (.help)
+        await message.delete()
+        
+    except (PeerIdInvalid, Exception):
+        # Fallback: Jika bot tidak ada di grup/chat, gunakan teks biasa melalui Userbot
+        fallback_text = (
+            f"{help_text}\n\n"
+            "⚠️ **Catatan:** Tombol interaktif nggak muncul karena aku (Bot Assistant) belum ada di chat ini.\n\n"
+            "**Daftar Perintah:**\n"
+            "• `Sistem`: `.sh`, `.eval`, `.sys`, `.speedtest`\n"
+            "• `Media`: `.vstk`, `.dl`, `.leech`\n"
+            "• `AI`: `.ask`, `.summarize`, `.tr`, `.tts`\n"
+            "• `Admin`: `.purge`, `.ban`, `.mute`, `.gban`"
         )
+        await message.edit(fallback_text)
