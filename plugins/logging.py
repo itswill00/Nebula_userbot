@@ -57,7 +57,7 @@ async def on_deleted(client, messages):
     for msg in messages:
         if not msg or not hasattr(msg, "chat") or not msg.chat or not hasattr(msg, "id"):
             continue
-            
+
         # Jangan log dari channel log sendiri
         if msg.chat.id == client.log_channel:
             continue

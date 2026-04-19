@@ -65,9 +65,9 @@ async def list_vars(client, message: Message):
         text += f"• `{key}`: `{val}`\n"
 
     text += "\n_Gunakan `.setvar <key> <val>` untuk mengubah._"
-    
+
     if len(text) > 4096:
         # Jika terlalu panjang, kirim sebagai log atau potong
         text = text[:4000] + "..."
-    
+
     await client.fast_edit(message, text)

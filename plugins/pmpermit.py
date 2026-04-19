@@ -42,8 +42,9 @@ async def pm_permit_rule(client, ctx):
 
     # Ambil data peringatan dari DB
     pm_warns = await client.db.get("pm_warns", {})
-    user_warn_data = pm_warns.get(str(user_id), {"count": 0, "last_msg_id": None})
-    
+    user_warn_data = pm_warns.get(
+        str(user_id), {"count": 0, "last_msg_id": None})
+
     warns = user_warn_data["count"] + 1
     user_warn_data["count"] = warns
 
@@ -55,7 +56,7 @@ async def pm_permit_rule(client, ctx):
                 "Anda telah diblokir otomatis karena terus mengirim pesan tanpa persetujuan."
             )
             await client.block_user(user_id)
-            
+
             # Notifikasi ke Log Channel
             log_msg = (
                 f"👤 #Blocked\n"
@@ -119,13 +120,13 @@ async def auto_approve_pm(client, message: Message):
     if user_id not in approved_list:
         approved_list.append(user_id)
         await client.db.set("pm_approved", approved_list)
-        
+
         # Cleanup data peringatan jika ada
         pm_warns = await client.db.get("pm_warns", {})
         if str(user_id) in pm_warns:
             del pm_warns[str(user_id)]
             await client.db.set("pm_warns", pm_warns)
-        
+
         await client.send_log(
             f"👤 #AutoApproved\n"
             f"**User:** `{user_id}`\n"
@@ -162,7 +163,7 @@ async def approve_pm(client, message: Message):
     if user_id not in approved_list:
         approved_list.append(user_id)
         await client.db.set("pm_approved", approved_list)
-        
+
         # Cleanup peringatan
         pm_warns = await client.db.get("pm_warns", {})
         if str(user_id) in pm_warns:

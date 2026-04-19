@@ -33,18 +33,18 @@ def get_size(bytes, suffix="B"):
 @Client.on_message(on_cmd("sysinfo", category="Sistem", info="Informasi sistem."))
 async def sys_info(client, message: Message):
     await client.fast_edit(message, "✦ Memproses data...")
-    
+
     # OS Info
     uname = platform.uname()
-    os_name = f"{distro.name()} {distro.version()}" if platform.system() == "Linux" else platform.system()
-    
+    os_name = f"{distro.name()} {distro.version()}" if platform.system(
+    ) == "Linux" else platform.system()
+
     # CPU Info
-    cpufreq = psutil.cpu_freq()
     cpu_usage = psutil.cpu_percent()
-    
+
     # Memory Info
     svmem = psutil.virtual_memory()
-    
+
     # Disk Info
     partitions = psutil.disk_partitions()
     disk_info = ""
@@ -61,7 +61,7 @@ async def sys_info(client, message: Message):
     uptime_seconds = time.time() - psutil.boot_time()
     uptime_h = int(uptime_seconds // 3600)
     uptime_m = int((uptime_seconds % 3600) // 60)
-    
+
     # Bot Uptime
     bot_uptime_seconds = time.time() - client.start_time
     bot_uptime_h = int(bot_uptime_seconds // 3600)
@@ -77,7 +77,7 @@ async def sys_info(client, message: Message):
         f"RAM    : `{get_size(svmem.used)} / {get_size(svmem.total)}`\n"
         f"Disk   : `{disk_info}`\n"
     )
-    
+
     await client.fast_edit(message, info)
 
 

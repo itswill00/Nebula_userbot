@@ -25,13 +25,13 @@ async def install_plugin(client, message: Message):
 
     if download_path:
         await client.fast_edit(message, f"✅ **Berhasil memasang `{plugin_name}`!**\n\n🔄 **Merestart Nebula untuk menerapkan...**")
-        
+
         # Simpan status untuk pemulihan pasca restart
         await client.db.set("restart_info", {
             "chat_id": message.chat.id,
             "msg_id": message.id
         })
-        
+
         # Restart
         os.execl(sys.executable, sys.executable, "main.py")
     else:
@@ -55,13 +55,13 @@ async def uninstall_plugin(client, message: Message):
     try:
         os.remove(plugin_path)
         await client.fast_edit(message, f"🗑️ **Plugin `{plugin_name}` berhasil dihapus.**\n\n🔄 **Merestart Nebula...**")
-        
+
         # Simpan status untuk pemulihan
         await client.db.set("restart_info", {
             "chat_id": message.chat.id,
             "msg_id": message.id
         })
-        
+
         # Restart
         os.execl(sys.executable, sys.executable, "main.py")
     except Exception as e:
@@ -70,15 +70,16 @@ async def uninstall_plugin(client, message: Message):
 
 @Client.on_message(on_cmd("plugins", category="System", info="Lihat daftar semua plugin yang aktif."))
 async def list_plugins(client, message: Message):
-    plugin_list = [f for f in os.listdir("plugins") if f.endswith(".py") and not f.startswith("_")]
-    
+    plugin_list = [f for f in os.listdir(
+        "plugins") if f.endswith(".py") and not f.startswith("_")]
+
     if not plugin_list:
         return await client.fast_edit(message, "📭 **Tidak ada plugin kustom yang terdeteksi.**")
 
     text = f"🔌 **Nebula Active Plugins ({len(plugin_list)})**\n\n"
     for plugin in sorted(plugin_list):
         text += f"• `{plugin.replace('.py', '')}`\n"
-    
+
     await client.fast_edit(message, text)
 
 
@@ -89,12 +90,12 @@ async def disable_chat_plugin(client, message: Message):
 
     plugin_name = message.command[1]
     chat_id = message.chat.id
-    
+
     disabled = await client.db.get(f"disabled_plugins:{chat_id}", [])
     if plugin_name not in disabled:
         disabled.append(plugin_name)
         await client.db.set(f"disabled_plugins:{chat_id}", disabled)
-    
+
     await client.fast_edit(message, f"❌ **Plugin `{plugin_name}` dinonaktifkan di chat ini.**")
 
 
@@ -105,10 +106,10 @@ async def enable_chat_plugin(client, message: Message):
 
     plugin_name = message.command[1]
     chat_id = message.chat.id
-    
+
     disabled = await client.db.get(f"disabled_plugins:{chat_id}", [])
     if plugin_name in disabled:
         disabled.remove(plugin_name)
         await client.db.set(f"disabled_plugins:{chat_id}", disabled)
-    
+
     await client.fast_edit(message, f"✅ **Plugin `{plugin_name}` diaktifkan kembali di chat ini.**")

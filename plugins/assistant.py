@@ -1,5 +1,4 @@
 import os
-import shutil
 import time
 from hydrogram.types import (
     InlineKeyboardMarkup,
@@ -46,7 +45,8 @@ async def get_system_stats():
 
     # Hitung Addons (file .py di folder plugins yang bukan internal)
     try:
-        addons = len([f for f in os.listdir("plugins") if f.endswith(".py") and not f.startswith("_")])
+        addons = len([f for f in os.listdir("plugins")
+                     if f.endswith(".py") and not f.startswith("_")])
     except Exception:
         addons = total_plugins
 
@@ -226,13 +226,13 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         await callback_query.answer("◈ Memproses...")
         parts = data.split("|")
         action, msg_id = parts[1], int(parts[2])
-        
+
         try:
             await callback_query.edit_message_text("◈ Mengunduh visual...")
-            
+
             # 1. Ambil pesan asli lewat hubungan Reply (Instant & Reliable)
             source_msg = callback_query.message.reply_to_message
-            
+
             # Fallback jika session tidak memuat reply_to_message otomatis
             if not source_msg:
                 source_msg = await client.get_messages(callback_query.message.chat.id, msg_id)
@@ -243,7 +243,8 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
             await callback_query.edit_message_text("◈ Menyiapkan folder & sinkronisasi...")
 
             # 2. Setup Folder (Robust Path)
-            banners_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources", "banners")
+            banners_dir = os.path.join(os.path.dirname(
+                os.path.dirname(__file__)), "resources", "banners")
             if not os.path.exists(banners_dir):
                 os.makedirs(banners_dir, exist_ok=True)
 
@@ -258,16 +259,17 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
                 target_path = os.path.join(banners_dir, "cosmos.png")
             else:
                 # Tambah koleksi (Shifting Cosmos mode)
-                target_path = os.path.join(banners_dir, f"user_{int(time.time())}.png")
+                target_path = os.path.join(
+                    banners_dir, f"user_{int(time.time())}.png")
 
             # 4. Download & Simpan
             await source_msg.download(file_name=target_path)
-            
+
             # 5. Reset Cache Database secara menyeluruh
             if hasattr(userbot, "db"):
                 await userbot.db.delete("banner_file_id")
                 await userbot.db.delete("banner_file_ids")
-            
+
             await callback_query.edit_message_text(
                 "✅ **Banner Diaktifkan.**\n"
                 f"File: `{os.path.basename(target_path)}`\n\n"
@@ -389,7 +391,6 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
 # --- CONTACT HANDLER ---
 async def assistant_contact_handler(client, message):
     userbot = client.parent if hasattr(client, "parent") else client
-    me = userbot.me
 
     # Handler khusus Pemilik (Manajer Visual)
     if message.from_user.id == userbot.owner_id:
@@ -399,15 +400,18 @@ async def assistant_contact_handler(client, message):
                 reply_to_message_id=message.id,
                 reply_markup=InlineKeyboardMarkup([
                     [
-                        InlineKeyboardButton("Terapkan (Ganti)", callback_data=f"sw_banner|replace|{message.id}"),
-                        InlineKeyboardButton("Tambah Koleksi", callback_data=f"sw_banner|add|{message.id}")
+                        InlineKeyboardButton(
+                            "Terapkan (Ganti)", callback_data=f"sw_banner|replace|{message.id}"),
+                        InlineKeyboardButton(
+                            "Tambah Koleksi", callback_data=f"sw_banner|add|{message.id}")
                     ],
-                    [InlineKeyboardButton("Batalkan", callback_data="close_db")]
+                    [InlineKeyboardButton(
+                        "Batalkan", callback_data="close_db")]
                 ])
             )
         # Jika teks dari owner, jangan forward tapi beri respon instruksi saja
         if message.text and not message.text.startswith("."):
-             return await message.reply("Gunakan menu ini untuk upload banner atau gunakan perintah userbot.")
+            return await message.reply("Gunakan menu ini untuk upload banner atau gunakan perintah userbot.")
 
     log_text = (
         f"📩 **Pesan Baru**\n\n"

@@ -29,10 +29,10 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
             f"TOTAL COMMANDS ~ {total_commands}"
         )
         markup = await get_help_markup(page=0)
-        
+
         # 1. Desain Menu Utama (Balanced HUD)
         stats = f"◈ {total_plugins} Fitur | {total_commands} Perintah"
-        
+
         caption = (
             f"**Nebula**\n\n"
             f"`{stats}`\n"

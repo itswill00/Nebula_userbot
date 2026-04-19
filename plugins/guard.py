@@ -1,16 +1,17 @@
-from hydrogram import Client, filters
+from hydrogram import Client
 from hydrogram.types import Message, ChatMemberUpdated
 from core.decorators import on_cmd
 import logging
 
 LOGS = logging.getLogger("Nebula")
 
+
 @Client.on_message(on_cmd("gban", category="Keamanan", info="Blokir user secara global dari semua grup."))
 async def gban_user(client, message: Message):
     replied = message.reply_to_message
     if not replied:
         return await client.fast_edit(message, "✦ Balas ke user yang mau dibanned global.")
-    
+
     user = replied.from_user
     if user.is_self:
         return await client.fast_edit(message, "❌ Tidak bisa gban diri sendiri.")
@@ -19,7 +20,7 @@ async def gban_user(client, message: Message):
     if user.id not in gban_list:
         gban_list.append(user.id)
         await client.db.set("gban_list", gban_list)
-    
+
     # Berusaha ban di chat saat ini
     try:
         await client.ban_chat_member(message.chat.id, user.id)
@@ -35,14 +36,14 @@ async def ungban_user(client, message: Message):
     replied = message.reply_to_message
     if not replied:
         return await client.fast_edit(message, "✦ Balas ke user yang mau di-ungban global.")
-    
+
     user = replied.from_user
     gban_list = await client.db.get("gban_list", [])
-    
+
     if user.id in gban_list:
         gban_list.remove(user.id)
         await client.db.set("gban_list", gban_list)
-        
+
     res_text = client.get_string("ungban_success").format(user=user.mention)
     await client.fast_edit(message, res_text)
 

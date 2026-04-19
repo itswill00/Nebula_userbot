@@ -6,7 +6,7 @@ from core.decorators import on_cmd
 @Client.on_message(on_cmd("sudo", category="Security", info="Tanda atau hapus user dari daftar Sudo."))
 async def manage_sudo(client, message: Message):
     user_id = None
-    
+
     # 1. Cek dari Reply
     if message.reply_to_message:
         user_id = message.reply_to_message.from_user.id
@@ -24,7 +24,7 @@ async def manage_sudo(client, message: Message):
         return await client.fast_edit(message, "👤 **Anda adalah pemilik bot ini.**")
 
     sudo_users = await client.db.get("sudo_users", [])
-    
+
     if user_id in sudo_users:
         sudo_users.remove(user_id)
         action = "dihapus dari"
@@ -39,12 +39,12 @@ async def manage_sudo(client, message: Message):
 @Client.on_message(on_cmd(["sudos", "fullsudo"], category="Security", info="Lihat daftar semua user Sudo."))
 async def list_sudos(client, message: Message):
     sudo_users = await client.db.get("sudo_users", [])
-    
+
     if not sudo_users:
         return await client.fast_edit(message, "📭 **Tidak ada user Sudo yang terdaftar.**")
 
     text = "🛡️ **Nebula Sudo Users**\n\n"
     for uid in sudo_users:
         text += f"• `{uid}`\n"
-    
+
     await client.fast_edit(message, text)

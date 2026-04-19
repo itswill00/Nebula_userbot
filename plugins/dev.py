@@ -26,10 +26,11 @@ async def aexec(code, client, message):
         "time": time,
         "__builtins__": __builtins__
     }
-    
+
     # Bungkus kode dalam fungsi async
-    wrapped_code = "async def __exec(client, message):\n" + "".join(f"    {line}\n" for line in code.split("\n"))
-    
+    wrapped_code = "async def __exec(client, message):\n" + \
+        "".join(f"    {line}\n" for line in code.split("\n"))
+
     try:
         exec(wrapped_code, exec_globals)
         return await exec_globals["__exec"](client, message)
@@ -50,7 +51,7 @@ async def evaluate_python(client, message: Message):
     old_stderr = sys.stderr
     redirected_stdout = sys.stdout = io.StringIO()
     redirected_stderr = sys.stderr = io.StringIO()
-    
+
     stdout, stderr, exc = None, None, None
     start_time = time.time()
 
@@ -67,7 +68,8 @@ async def evaluate_python(client, message: Message):
     sys.stderr = old_stderr
 
     # Format Output
-    evaluation = exc or stderr or stdout or str(value) if value is not None else "Success (No Output)"
+    evaluation = exc or stderr or stdout or str(
+        value) if value is not None else "Success (No Output)"
     duration = f"{(end_time - start_time) * 1000:.2f}ms"
 
     final_output = (
@@ -81,7 +83,7 @@ async def evaluate_python(client, message: Message):
         with io.BytesIO(str.encode(final_output)) as out_file:
             out_file.name = "eval_result.txt"
             await message.reply_document(
-                document=out_file, 
+                document=out_file,
                 caption=f"📝 **Eval Result** (Too long for message)\n`Time: {duration}`"
             )
             await status.delete()
@@ -103,7 +105,7 @@ async def bash_executor(client, message: Message):
         stderr=asyncio.subprocess.PIPE
     )
     stdout, stderr = await process.communicate()
-    
+
     result = (stdout.decode().strip() or "") + (stderr.decode().strip() or "")
     if not result:
         result = "Success (No Output)"

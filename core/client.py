@@ -68,7 +68,8 @@ class NebulaBot(Client):
 
         # Konfigurasi ID Pemilik
         owner_id = os.getenv("OWNER_ID")
-        self.owner_id = int(owner_id) if owner_id and owner_id.isdigit() else None
+        self.owner_id = int(
+            owner_id) if owner_id and owner_id.isdigit() else None
 
         self.scheduler = AsyncIOScheduler()
         self.start_time = time.time()
@@ -113,11 +114,11 @@ class NebulaBot(Client):
 
         await super().start()
         self.start_time = time.time()  # Reset start_time to now
-        
+
         # Auto-detect Owner ID jika tidak diset di env
         if not self.owner_id:
             self.owner_id = self.me.id
-            
+
         if not self.scheduler.running:
             self.scheduler.start()
 
@@ -129,10 +130,10 @@ class NebulaBot(Client):
             chat_id = restart_data.get("chat_id")
             msg_id = restart_data.get("msg_id")
             old_time = restart_data.get("time")
-            
+
             if old_time:
                 dt = time.time() - old_time
-                downtime_str = f"{int(dt)}s" if dt < 60 else f"{int(dt/60)}m {int(dt%60)}s"
+                downtime_str = f"{int(dt)}s" if dt < 60 else f"{int(dt/60)}m {int(dt % 60)}s"
 
             try:
                 msg_status = "✅ **Nebula Berhasil Direstart!**"
@@ -155,16 +156,16 @@ class NebulaBot(Client):
         banners_dir = os.path.join(ROOT_DIR, "resources", "banners")
         if os.path.exists(banners_dir):
             import random
-            banners = [os.path.join(banners_dir, f) for f in os.listdir(banners_dir) 
-                      if f.lower().endswith((".png", ".jpg", ".jpeg"))]
+            banners = [os.path.join(banners_dir, f) for f in os.listdir(banners_dir)
+                       if f.lower().endswith((".png", ".jpg", ".jpeg"))]
             if banners:
                 return random.choice(banners)
-        
+
         # 2. Fallback ke Environment Variable
         env_banner = os.getenv("BANNER")
         if env_banner:
             return env_banner
-            
+
         # 3. Fallback terakhir (standard link)
         return "https://telegra.ph/file/0c976939988a8f6022ced.jpg"
 
@@ -173,7 +174,7 @@ class NebulaBot(Client):
         strings_dir = os.path.join(ROOT_DIR, "resources", "strings")
         if not os.path.exists(strings_dir):
             return
-        
+
         for lang_file in os.listdir(strings_dir):
             if lang_file.endswith(".json"):
                 lang_code = lang_file.replace(".json", "")
@@ -187,8 +188,8 @@ class NebulaBot(Client):
         """Ambil teks berdasarkan bahasa aktif (Fallback ke EN jika ID tidak ada)."""
         lang = self.current_lang
         # Prioritas: Bahasa Aktif -> Bahasa Inggris -> Key itu sendiri
-        return self.strings.get(lang, {}).get(key, 
-               self.strings.get("en", {}).get(key, key))
+        return self.strings.get(lang, {}).get(key,
+                                              self.strings.get("en", {}).get(key, key))
 
     async def send_log(self, text: str):
         """Kirim laporan aktivitas ke LOG_CHANNEL (Minimalist Style)."""
@@ -196,7 +197,7 @@ class NebulaBot(Client):
             return
         try:
             await self.assistant.send_message(
-                self.log_channel, 
+                self.log_channel,
                 f"📑 **Nebula Log**\n\n{text}"
             )
         except Exception as e:
@@ -219,7 +220,7 @@ class NebulaBot(Client):
 
         # 2. Cek Database Cache
         cached_id = await self.db.get("banner_file_id")
-        
+
         # Coba Kirim via Cache (Paling Stabil)
         if cached_id:
             try:
@@ -237,7 +238,7 @@ class NebulaBot(Client):
 
         # 2. Ambil Source Banner (Lokal atau URL)
         source = self.banner_url
-        
+
         # Priority 2: Streaming Lokal atau URL
         try:
             # Jika source adalah path file lokal, kirim sebagai stream biner
@@ -250,7 +251,7 @@ class NebulaBot(Client):
                         reply_markup=buttons,
                         reply_to_message_id=reply_to_message_id
                     )
-            
+
             # Jika source adalah URL (Fallback ke Standard Telegraph)
             return await self.assistant.send_photo(
                 chat_id,
@@ -288,15 +289,16 @@ class NebulaBot(Client):
             kernel = uname.release
             py_ver = platform.python_version()
             ram = psutil.virtual_memory().percent
-            
+
             # Hitung Plugin Aktif
-            plugin_list = [f for f in os.listdir("plugins") if f.endswith(".py") and not f.startswith("_")]
+            plugin_list = [f for f in os.listdir(
+                "plugins") if f.endswith(".py") and not f.startswith("_")]
             plugin_count = len(plugin_list)
 
             # 3. Desain Laporan (Zero Gimmick HUD - Enhanced)
             status_text = "DIRESTART" if is_restarted else "AKTIF"
             header_ico = "🔄" if is_restarted else "🚀"
-            
+
             card_text = (
                 f"{header_ico} **Nebula {status_text}**\n"
                 f"━━━━━━━━━━━━━━━\n"
@@ -312,8 +314,10 @@ class NebulaBot(Client):
             # 4. Tombol Fungsional
             buttons = InlineKeyboardMarkup([
                 [
-                    InlineKeyboardButton("Bantuan", callback_data="back_to_main"),
-                    InlineKeyboardButton("Sistem", callback_data="cat|System|0")
+                    InlineKeyboardButton(
+                        "Bantuan", callback_data="back_to_main"),
+                    InlineKeyboardButton(
+                        "Sistem", callback_data="cat|System|0")
                 ]
             ])
 
@@ -323,7 +327,7 @@ class NebulaBot(Client):
                 card_text,
                 buttons=buttons
             )
-            
+
             # 6. Bulk Caching (Shifting Cosmos - Visual Rebirth)
             banner_ids = []
             if msg and hasattr(msg, "photo") and msg.photo:
@@ -349,10 +353,10 @@ class NebulaBot(Client):
 
             if banner_ids:
                 await self.db.set("banner_file_ids", list(set(banner_ids)))
-            
+
             if msg:
                 await self.db.set("last_startup_log_id", msg.id)
-            
+
             return msg
         except Exception as e:
             LOGS.error(f"Failed to send startup notice: {e}")
