@@ -2,6 +2,7 @@ import os
 import google.generativeai as genai
 from hydrogram import Client, filters
 from hydrogram.types import Message
+from core.decorators import on_cmd
 
 # Inisialisasi Gemini
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")
@@ -11,33 +12,26 @@ if GEMINI_KEY:
 else:
     model = None
 
-PREFIX = "."
-
-@Client.on_message(filters.command("ask", prefixes=PREFIX) & filters.me)
+@Client.on_message(on_cmd("ask", category="Intelligence", info="Tanya jawab cerdas dengan Gemini AI."))
 async def ask_gemini(client, message: Message):
-    """Tanya jawab dengan Gemini AI."""
     if not model:
-        return await message.edit("`Waduh, API Key Gemini kamu belum dipasang di .env.`")
-    
+        return await message.edit("`Waduh, API Key Gemini kamu belum dipasang.`")
     if len(message.command) < 2:
-        return await message.edit("`Mau tanya apa? Ketik pertanyaannya setelah perintah ya.`")
+        return await message.edit("`Mau tanya apa? Ketik pertanyaannya ya.`")
     
     prompt = message.text.split(None, 1)[1]
     status = await message.edit("`Bentar ya, aku mikir dulu...`")
-    
     try:
         response = model.generate_content(prompt)
-        await status.edit(f"💡 **Hasil Pemikiran Gemini:**\n\n{response.text}")
+        await status.edit(f"💡 **Hasil Pemikiran:**\n\n{response.text}")
     except Exception as e:
-        await status.edit(f"😓 **Aduhh, ada error pas lagi mikir:** `{str(e)}`")
+        await status.edit(f"😓 **Error pas mikir:** `{str(e)}`")
 
-@Client.on_message(filters.command("summarize", prefixes=PREFIX) & filters.me)
+@Client.on_message(on_cmd("summarize", category="Intelligence", info="Rangkum obrolan grup yang panjang."))
 async def summarize_group(client, message: Message):
-    """Merangkum percakapan grup."""
     if not model:
         return await message.edit("`API Key Gemini belum ada nih.`")
-    
-    status = await message.edit("`Sabar ya, aku baca-baca dulu riwayat chatnya...`")
+    status = await message.edit("`Sabar ya, aku baca riwayat chatnya dulu...`")
     
     messages = []
     async for msg in client.get_chat_history(message.chat.id, limit=50):
@@ -46,14 +40,14 @@ async def summarize_group(client, message: Message):
             messages.append(f"{user}: {msg.text}")
     
     if not messages:
-        return await status.edit("`Grupnya sepi banget, nggak ada pesan teks yang bisa aku rangkum.`")
+        return await status.edit("`Grup sepi, nggak ada yang bisa dirangkum.`")
     
     history_text = "\n".join(messages[::-1])
-    prompt = f"Rangkum percakapan ini layaknya seorang asisten yang sedang melapor ke bosnya. Pakai bahasa yang santai tapi jelas:\n\n{history_text}"
+    prompt = f"Summarize this conversation like a professional assistant reporting to their boss:\n\n{history_text}"
     
-    await status.edit("`Lagi aku buatin ringkasannya ya...`")
+    await status.edit("`Lagi aku buatin ringkasannya...`")
     try:
         response = model.generate_content(prompt)
         await status.edit(f"📝 **Ringkasan Buat Kamu:**\n\n{response.text}")
     except Exception as e:
-        await status.edit(f"❌ **Gagal ngerangkum nih:** `{str(e)}`")
+        await status.edit(f"❌ **Gagal ngerangkum:** `{str(e)}`")
