@@ -1,10 +1,8 @@
-from hydrogram import Client, filters
+from hydrogram import Client
 from hydrogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton
 
-# Ini berjalan di Assistant Bot
-# Menangani @bot_username help
-@Client.on_inline_query()
-async def inline_handler(client, inline_query: InlineQuery):
+async def assistant_inline_handler(client, inline_query: InlineQuery):
+    """Menangani permintaan menu bantuan via @bot_username help."""
     query = inline_query.query.lower()
     
     if query == "help":
@@ -27,6 +25,7 @@ async def inline_handler(client, inline_query: InlineQuery):
             InlineQueryResultArticle(
                 id="help_menu",
                 title="Nebula Help Menu",
+                description="Pusat kontrol interaktif Nebula",
                 input_message_content=InputTextMessageContent(help_text),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )

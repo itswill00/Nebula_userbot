@@ -1,26 +1,31 @@
 from core.client import NebulaBot
 import uvloop
 from hydrogram import filters
-from hydrogram.handlers import MessageHandler, CallbackQueryHandler
+from hydrogram.handlers import MessageHandler, CallbackQueryHandler, InlineQueryHandler
 from plugins.assistant import assistant_contact_handler, assistant_callback_handler
+from plugins._inline import assistant_inline_handler
 
 if __name__ == "__main__":
     uvloop.install()
     bot = NebulaBot()
     
-    # Hubungkan Assistant jika aktif
+    # Konfigurasi Assistant Bot jika aktif
     if bot.assistant:
-        # Tambahkan referensi parent untuk akses DB dari Assistant
         bot.assistant.parent = bot
         
-        # Handler untuk Contact Bot (Assistant menerima PM dari orang lain)
+        # 1. Handler untuk Contact Bot (Pesan Masuk)
         bot.assistant.add_handler(
             MessageHandler(assistant_contact_handler, filters.private & ~filters.bot)
         )
         
-        # Handler untuk Dashboard (Callback Tombol)
+        # 2. Handler untuk Callback Tombol (Dashboard & Help)
         bot.assistant.add_handler(
             CallbackQueryHandler(assistant_callback_handler)
+        )
+
+        # 3. Handler untuk Inline Query (Kunci Tombol .help)
+        bot.assistant.add_handler(
+            InlineQueryHandler(assistant_inline_handler)
         )
 
     bot.run()
