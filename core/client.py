@@ -58,6 +58,9 @@ class NebulaBot(Client):
             app_version="1.6.0"
         )
         self.db = LocalDB(os.path.join(ROOT_DIR, "nebula_db.json"))
+        # Load database ke memori agar respon tombol secepat kilat (0ms delay)
+        asyncio.get_event_loop().run_until_complete(self.db.load_to_memory())
+        
         self.strings = {}
         self.cmd_help = CMD_HELP
         self.scheduler = AsyncIOScheduler()
