@@ -80,3 +80,35 @@ async def list_plugins(client, message: Message):
         text += f"• `{plugin.replace('.py', '')}`\n"
     
     await client.fast_edit(message, text)
+
+
+@Client.on_message(on_cmd("disable", category="System", info="Matikan plugin tertentu di chat ini."))
+async def disable_chat_plugin(client, message: Message):
+    if len(message.command) < 2:
+        return await client.fast_edit(message, "⚠️ **Masukkan nama plugin untuk dimatikan.**")
+
+    plugin_name = message.command[1]
+    chat_id = message.chat.id
+    
+    disabled = await client.db.get(f"disabled_plugins:{chat_id}", [])
+    if plugin_name not in disabled:
+        disabled.append(plugin_name)
+        await client.db.set(f"disabled_plugins:{chat_id}", disabled)
+    
+    await client.fast_edit(message, f"❌ **Plugin `{plugin_name}` dinonaktifkan di chat ini.**")
+
+
+@Client.on_message(on_cmd("enable", category="System", info="Aktifkan kembali plugin di chat ini."))
+async def enable_chat_plugin(client, message: Message):
+    if len(message.command) < 2:
+        return await client.fast_edit(message, "⚠️ **Masukkan nama plugin untuk diaktifkan.**")
+
+    plugin_name = message.command[1]
+    chat_id = message.chat.id
+    
+    disabled = await client.db.get(f"disabled_plugins:{chat_id}", [])
+    if plugin_name in disabled:
+        disabled.remove(plugin_name)
+        await client.db.set(f"disabled_plugins:{chat_id}", disabled)
+    
+    await client.fast_edit(message, f"✅ **Plugin `{plugin_name}` diaktifkan kembali di chat ini.**")

@@ -1,0 +1,17 @@
+{
+    "startup_online": "Nebula Online",
+    "startup_restarted": "Nebula Restarted",
+    "owner": "Owner",
+    "assistant": "Assistant",
+    "system": "System",
+    "engine": "Engine",
+    "plugins": "Plugins",
+    "ram_load": "RAM Load",
+    "main_menu": "Main Menu",
+    "total_commands": "TOTAL COMMANDS",
+    "help_not_found": "Plugin not found.",
+    "access_denied": "Access Denied.",
+    "gban_success": "🛡 **Global Ban**\n\nUser {user} has been globally banned.",
+    "ungban_success": "🛡 **Ungban**\n\nUser {user} has been globally pardoned.",
+    "sentinel_kick": "🚨 **Sentinel Alert**\n\nForbidden user {user} detected and eliminated instantly."
+}

@@ -60,6 +60,9 @@ class NebulaBot(Client):
             app_version="1.6.0"
         )
         self.db = LocalDB(os.path.join(ROOT_DIR, "nebula_db.json"))
+        self.strings = {}
+        self.current_lang = "id"
+        self._load_strings()
         # Load database ke memori agar respon tombol secepat kilat (0ms delay)
         asyncio.get_event_loop().run_until_complete(self.db.load_to_memory())
 
@@ -67,8 +70,6 @@ class NebulaBot(Client):
         owner_id = os.getenv("OWNER_ID")
         self.owner_id = int(owner_id) if owner_id and owner_id.isdigit() else None
 
-        self.strings = {}
-        self.cmd_help = CMD_HELP
         self.scheduler = AsyncIOScheduler()
         self.start_time = time.time()
 
@@ -77,8 +78,6 @@ class NebulaBot(Client):
         # Register The Brain at group -1 (Tertinggi) untuk mencegat semua pesan
         self.add_handler(MessageHandler(
             self.brain.process_message, filters.all & ~filters.me), group=-1)
-
-        self._load_all_strings()
 
         # Log Channel Configuration
         log_id = os.getenv("LOG_CHANNEL")
@@ -97,27 +96,6 @@ class NebulaBot(Client):
                 no_updates=False
             )
             self.assistant.parent = self
-
-    def _load_all_strings(self):
-        string_path = os.path.join(ROOT_DIR, "strings")
-        if not os.path.exists(string_path):
-            return
-        for lang_file in os.listdir(string_path):
-            if lang_file.endswith(".json"):
-                lang_code = lang_file.split(".")[0]
-                with open(os.path.join(string_path, lang_file), "r", encoding="utf-8") as f:
-                    self.strings[lang_code] = json.load(f)
-
-    async def get_string(self, key, default=None):
-        lang = await self.db.get("lang", "id")
-        return self.strings.get(lang, self.strings.get("id", {})).get(key, default or key)
-
-    async def send_log(self, text: str):
-        """Kirim laporan aktivitas ke LOG_CHANNEL."""
-        try:
-            await self.send_message(self.log_channel, f"📑 **Nebula Log Report**\n\n{text}")
-        except Exception as e:
-            LOGS.error(f"Failed to send log: {e}")
 
     async def fast_edit(self, message: Message, text: str, **kwargs):
         try:
@@ -170,6 +148,28 @@ class NebulaBot(Client):
             return local_path
         # Default fallback
         return "https://telegra.ph/file/0c976939988a8f6022ced.jpg"
+
+    def _load_strings(self):
+        """Muat semua file modul bahasa ke memori (Localization System)."""
+        strings_dir = os.path.join(ROOT_DIR, "resources", "strings")
+        if not os.path.exists(strings_dir):
+            return
+        
+        for lang_file in os.listdir(strings_dir):
+            if lang_file.endswith(".json"):
+                lang_code = lang_file.replace(".json", "")
+                try:
+                    with open(os.path.join(strings_dir, lang_file), "r", encoding="utf-8") as f:
+                        self.strings[lang_code] = json.load(f)
+                except Exception as e:
+                    LOGS.error(f"Gagal memuat bahasa {lang_file}: {e}")
+
+    def get_string(self, key: str) -> str:
+        """Ambil teks berdasarkan bahasa aktif (Fallback ke EN jika ID tidak ada)."""
+        lang = self.current_lang
+        # Prioritas: Bahasa Aktif -> Bahasa Inggris -> Key itu sendiri
+        return self.strings.get(lang, {}).get(key, 
+               self.strings.get("en", {}).get(key, key))
 
     async def send_card(self, chat_id, text, buttons=None, reply_to_message_id=None):
         """Kirim pesan dengan banner & tombol bergaya premium (Graceful Fallback)."""

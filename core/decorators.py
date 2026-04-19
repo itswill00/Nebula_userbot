@@ -24,6 +24,13 @@ async def _sudo_filter(_, client, message):
 sudo_filter = filters.create(_sudo_filter)
 
 
+async def _plugin_enabled_filter(filter, client, message):
+    """Filter untuk memeriksa apakah plugin aktif di chat tertentu."""
+    chat_id = message.chat.id
+    disabled_list = await client.db.get(f"disabled_plugins:{chat_id}", [])
+    return filter.plugin_name not in disabled_list
+
+
 def on_cmd(command, category="General", info="Belum ada info."):
     """
     Dekorator kustom bergaya Ultroid.
@@ -45,8 +52,14 @@ def on_cmd(command, category="General", info="Belum ada info."):
     else:
         CMD_HELP[category][plugin_name][command] = info
 
-    # Gabungkan filter: Command + (Saya ATAU Sudo)
-    return filters.command(command, prefixes=".") & (filters.me | sudo_filter)
+    # Filter komposit: Command + (Identitas) + (Status Plugin di Chat)
+    base_filter = filters.command(command, prefixes=".") & (filters.me | sudo_filter)
+    
+    # Tambahkan filter keaktifan plugin (Tipe dinamis agar plugin_name terbawa)
+    dynamic_filter = filters.create(_plugin_enabled_filter)
+    dynamic_filter.plugin_name = plugin_name
+    
+    return base_filter & dynamic_filter
 
 
 # BRAIN_RULES tetap sama
