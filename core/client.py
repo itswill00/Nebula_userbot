@@ -113,9 +113,9 @@ class NebulaBot(Client):
         except Exception as e:
             LOGS.error(f"Failed to send log: {e}")
 
-    async def fast_edit(self, message: Message, text: str, parse_mode=None):
+    async def fast_edit(self, message: Message, text: str, **kwargs):
         try:
-            return await message.edit(text, parse_mode=parse_mode)
+            return await message.edit(text, **kwargs)
         except Exception as e:
             LOGS.error(f"Edit failed: {e}")
             return message
