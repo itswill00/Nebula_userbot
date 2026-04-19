@@ -38,14 +38,17 @@ class NebulaBot(Client):
             plugins=dict(root="plugins"),
             workdir=ROOT_DIR,
             device_model="Nebula Master",
-            app_version="1.5.1"
+            app_version="1.6.0"
         )
         self.db = LocalDB(os.path.join(ROOT_DIR, "nebula_db.json"))
         self.strings = {}
-        # Gunakan registry global
         self.cmd_help = CMD_HELP
         self.scheduler = AsyncIOScheduler()
         self._load_all_strings()
+        
+        # Log Channel Configuration
+        log_id = os.getenv("LOG_CHANNEL")
+        self.log_channel = int(log_id) if log_id and (log_id.startswith("-100") or log_id.isdigit()) else "me"
         
         self.assistant = None
         bot_token = os.getenv("BOT_TOKEN")
@@ -73,6 +76,13 @@ class NebulaBot(Client):
         lang = await self.db.get("lang", "id")
         return self.strings.get(lang, self.strings.get("id", {})).get(key, default or key)
 
+    async def send_log(self, text: str):
+        """Kirim laporan aktivitas ke LOG_CHANNEL."""
+        try:
+            await self.send_message(self.log_channel, f"📑 **Nebula Log Report**\n\n{text}")
+        except Exception as e:
+            LOGS.error(f"Failed to send log: {e}")
+
     async def fast_edit(self, message: Message, text: str, parse_mode=None):
         try:
             return await message.edit(text, parse_mode=parse_mode)
@@ -86,7 +96,10 @@ class NebulaBot(Client):
             self.scheduler.start()
         if self.assistant:
             await self.assistant.start()
-        LOGS.info("Nebula Engine 1.5.1 (Userge Style) Active.")
+        
+        # Kirim notifikasi bot hidup
+        await self.send_log("🚀 **Nebula Engine v1.6.0 is Online!**\nAll systems functional.")
+        LOGS.info("Nebula Engine 1.6.0 Active.")
 
     async def stop(self, *args):
         await super().stop()

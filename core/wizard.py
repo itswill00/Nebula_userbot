@@ -16,6 +16,7 @@ async def run_wizard():
     api_hash = input("2. Masukkan API_HASH: ").strip()
     bot_token = input("3. Masukkan BOT_TOKEN (Assistant): ").strip()
     gemini_key = input("4. Masukkan GEMINI_API_KEY: ").strip()
+    log_channel = input("5. Masukkan LOG_CHANNEL (ID/me, contoh: -100xxx): ").strip() or "me"
 
     # 2. Simpan ke .env di root
     env_path = os.path.join(ROOT_DIR, ".env")
@@ -25,6 +26,7 @@ async def run_wizard():
         f.write(f"API_HASH={api_hash}\n")
         f.write(f"BOT_TOKEN={bot_token}\n")
         f.write(f"GEMINI_API_KEY={gemini_key}\n")
+        f.write(f"LOG_CHANNEL={log_channel}\n")
 
     # 3. Autentikasi Telegram (Login OTP)
     print("\n🔑 Sekarang kita login ke Telegram.")
