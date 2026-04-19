@@ -1,59 +1,34 @@
 from hydrogram import Client, filters
-from hydrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from hydrogram.errors import PeerIdInvalid, FloodWait
-import asyncio
+from hydrogram.types import Message
 
 PREFIX = "."
 
 @Client.on_message(filters.command("help", prefixes=PREFIX) & filters.me)
 async def help_menu(client, message: Message):
-    """Menampilkan menu bantuan interaktif atau teks fallback."""
+    """Menampilkan menu bantuan via Inline Query (Ultroid Style)."""
     
-    help_text = (
-        "🌌 **Nebula — Pusat Kendali Kamu**\n\n"
-        "Halo! Mau aku bantu apa hari ini? Pilih kategori di bawah ya."
-    )
-
-    # Persiapkan tombol
-    buttons = [
-        [
-            InlineKeyboardButton("🚀 Sistem", callback_data="help_system"),
-            InlineKeyboardButton("🎬 Media", callback_data="help_media")
-        ],
-        [
-            InlineKeyboardButton("🧠 AI Tools", callback_data="help_ai"),
-            InlineKeyboardButton("🛡 Keamanan", callback_data="help_security")
-        ],
-        [
-            InlineKeyboardButton("⚙️ Setelan", callback_data="help_config")
-        ]
-    ]
-
-    # Jika Assistant tidak aktif, kirim teks biasa
     if not client.assistant:
-        return await message.edit(
-            f"{help_text}\n\n**Perintah:** `.sh`, `.eval`, `.vstk`, `.dl`, `.ask`, `.db`"
-        )
+        return await message.edit("`Bot Assistant tidak aktif.`")
+
+    # Ambil username bot assistant
+    bot_info = await client.assistant.get_me()
+    bot_username = bot_info.username
 
     try:
-        # Coba kirim via Assistant Bot (untuk tombol)
-        await client.assistant.send_message(
+        # Picu inline query ke bot sendiri
+        # Ini memungkinkan pengiriman tombol tanpa bot harus ada di grup
+        results = await client.get_inline_bot_results(bot_username, "help")
+        
+        # Kirim hasil pertama dari query tersebut
+        await client.send_inline_bot_result(
             chat_id=message.chat.id,
-            text=help_text,
-            reply_markup=InlineKeyboardMarkup(buttons)
+            query_id=results.query_id,
+            result_id=results.results[0].id,
+            reply_to_message_id=message.reply_to_message.id if message.reply_to_message else None
         )
-        # Jika berhasil, hapus pesan pemicu (.help)
+        
+        # Hapus pesan perintah (.help)
         await message.delete()
         
-    except (PeerIdInvalid, Exception):
-        # Fallback: Jika bot tidak ada di grup/chat, gunakan teks biasa melalui Userbot
-        fallback_text = (
-            f"{help_text}\n\n"
-            "⚠️ **Catatan:** Tombol interaktif nggak muncul karena aku (Bot Assistant) belum ada di chat ini.\n\n"
-            "**Daftar Perintah:**\n"
-            "• `Sistem`: `.sh`, `.eval`, `.sys`, `.speedtest`\n"
-            "• `Media`: `.vstk`, `.dl`, `.leech`\n"
-            "• `AI`: `.ask`, `.summarize`, `.tr`, `.tts`\n"
-            "• `Admin`: `.purge`, `.ban`, `.mute`, `.gban`"
-        )
-        await message.edit(fallback_text)
+    except Exception as e:
+        await message.edit(f"❌ **Gagal memicu Inline Menu:**\n`{str(e)}`")
