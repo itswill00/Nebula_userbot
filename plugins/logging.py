@@ -26,6 +26,8 @@ async def on_deleted(client, messages):
         return
 
     for msg in messages:
+        if not msg or not hasattr(msg, "chat") or not msg.chat or not hasattr(msg, "id"):
+            continue
         chat_key = f"{msg.chat.id}_{msg.id}"
         if chat_key in client.db.msg_cache:
             cached = client.db.msg_cache[chat_key]
@@ -43,6 +45,9 @@ async def on_edited(client, message: Message):
     """Mendeteksi pesan yang diedit dan mengirim laporan ke LOG_CHANNEL."""
     is_log_enabled = await client.db.get("anti_edit", True)
     if not is_log_enabled:
+        return
+
+    if not message or not message.chat or not hasattr(message, "id"):
         return
 
     chat_key = f"{message.chat.id}_{message.id}"

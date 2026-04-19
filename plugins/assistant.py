@@ -167,8 +167,8 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         return await callback_query.answer("🚫 Akses Ditolak.", show_alert=True)
 
     banner = await get_banner_path(userbot, userbot.db)
-    # \xad (soft hyphen) is an invisible character used to embed the banner URL
-    banner_prefix = f"[\xad]({banner})"
+    # \u200b (zero width space) is used to embed the banner URL
+    banner_prefix = f"[\u200b]({banner})"
 
     if data == "back_to_main":
         await callback_query.answer()

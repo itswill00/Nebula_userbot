@@ -15,10 +15,9 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
 
     if query == "help":
         banner = await get_banner_path(userbot, userbot.db)
-        # Gunakan format invisible link agar gambar muncul di link preview
-        # \xad adalah soft hyphen, hampir tidak terlihat.
+        # Use Zero Width Space (\u200b) for better invisible link reliability
         text = (
-            f"[\xad]({banner})🌌 **Nebula Engine - Help Menu**\n"
+            f"[\u200b]({banner})🌌 **Nebula Engine - Help Menu**\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
             "Pilih plugin di bawah ini untuk melihat detail perintah dan pengaturan.\n"
             "Gunakan tombol `«` dan `»` untuk beralih halaman."
