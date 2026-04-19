@@ -1,0 +1,13 @@
+{
+    "HELP_HEADER": "🌌 **Nebula Userbot God Mode**",
+    "HELP_SYSTEM": "**Sistem & Jaringan:**",
+    "HELP_MEDIA": "**Media & Download:**",
+    "HELP_AI": "**Kecerdasan & Utilitas:**",
+    "HELP_ADMIN": "**Admin & Keamanan:**",
+    "SET_LANG_SUCCESS": "Bahasa telah diubah menjadi **Bahasa Indonesia**.",
+    "SET_LANG_INVALID": "Kode bahasa tidak valid. Didukung: `en`, `id`.",
+    "SET_VALUE_SUCCESS": "Pengaturan `{key}` telah diperbarui menjadi `{value}`.",
+    "PM_GUARD_MSG": "🛡 **Nebula Keamanan PM**\n\nHalo! Anda belum disetujui. Pesan Anda akan diabaikan.",
+    "REPLY_USER_OR_ID": "Balas ke user atau berikan ID.",
+    "PROCESSING": "`Memproses...`"
+}

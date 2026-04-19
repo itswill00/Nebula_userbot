@@ -1,0 +1,13 @@
+{
+    "HELP_HEADER": "🌌 **Nebula Userbot God Mode**",
+    "HELP_SYSTEM": "**System & Network:**",
+    "HELP_MEDIA": "**Media & Download:**",
+    "HELP_AI": "**Intelligence & Utility:**",
+    "HELP_ADMIN": "**Admin & Security:**",
+    "SET_LANG_SUCCESS": "Language has been changed to **English**.",
+    "SET_LANG_INVALID": "Invalid language code. Supported: `en`, `id`.",
+    "SET_VALUE_SUCCESS": "Setting `{key}` has been updated to `{value}`.",
+    "PM_GUARD_MSG": "🛡 **Nebula PM Security**\n\nHello! You haven't been approved yet. Your messages will be ignored.",
+    "REPLY_USER_OR_ID": "Reply to a user or provide an ID.",
+    "PROCESSING": "`Processing...`"
+}
