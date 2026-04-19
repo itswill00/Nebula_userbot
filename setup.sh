@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# Clear terminal
-clear
+# Berhenti jika ada error
+set -e
 
+clear
 echo "🌌 Nebula Userbot - Auto Installer"
 echo "-----------------------------------"
 
@@ -25,12 +26,20 @@ else
     sudo apt install python3 python3-pip ffmpeg aria2 git -y
 fi
 
-# Install Dependensi Python
+# Install Dependensi Python dengan verifikasi
 echo "🐍 Installing python requirements..."
-pip3 install -r requirements.txt
+pip3 install --upgrade pip
+if ! pip3 install -r requirements.txt; then
+    echo "❌ Gagal menginstal dependensi Python. Cek koneksi atau pesan error di atas."
+    exit 1
+fi
 
 # Jalankan Wizard Interaktif
-python3 core/wizard.py
+echo "🧙 Memulai Wizard Persiapan..."
+if ! python3 core/wizard.py; then
+    echo "❌ Wizard gagal dijalankan. Pastikan library terinstal dengan benar."
+    exit 1
+fi
 
 # Buat run.sh
 cat <<EOF > run.sh
@@ -44,4 +53,7 @@ done
 EOF
 chmod +x run.sh
 
-echo "Semua sudah siap! Gunakan './run.sh' untuk menjalankan bot kamu."
+echo "-----------------------------------"
+echo "✅ SEMUA BERHASIL DIINSTAL!"
+echo "Gunakan './run.sh' untuk menjalankan bot kamu."
+echo "-----------------------------------"

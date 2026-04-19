@@ -1,4 +1,4 @@
-hydrogram==0.1.2
+hydrogram==0.2.0
 TgCrypto==1.2.5
 psutil==5.9.8
 python-dotenv==1.0.1
