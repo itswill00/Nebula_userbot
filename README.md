@@ -1,15 +1,16 @@
-# Nebula Userbot
+# Nebula Userbot (God Mode)
 
 Modular MTProto Userbot yang dioptimalkan untuk performa tinggi pada Linux VPS. Memanfaatkan Hydrogram (Asyncio), Aria2 RPC untuk unduhan cepat, dan Gemini 1.5 Flash untuk integrasi AI.
 
-## Fitur Utama
+## Fitur Utama Terkini
 
+- **Developer REPL**: Eksekusi kode Python asinkron langsung dari chat (`.eval`).
+- **Network Mastery**: Uji kecepatan koneksi VPS (`.speedtest`) dan IP lookup (`.ip`).
+- **Intelligence Suite**: Asisten Gemini AI, Chat Summarizer, Text-to-Speech (TTS), dan Penerjemah AI (`.tr`).
 - **Media Engine**: Konversi video ke sticker (.webm) dan universal downloader (yt-dlp).
 - **Leech System**: High-speed download via Aria2 RPC langsung ke Telegram.
-- **AI Integration**: Chat asisten dan ringkasan grup via Gemini 1.5 Flash.
 - **Security**: PM Guard (Auto-approve) dan Anti-Delete/Edit logging.
 - **Admin Tools**: Purge, Ban, Kick, Mute dengan optimasi bulk operation.
-- **System Control**: Remote shell execution dan VPS monitoring.
 
 ## Persiapan Sistem
 
@@ -51,20 +52,22 @@ Modular MTProto Userbot yang dioptimalkan untuk performa tinggi pada Linux VPS. 
 | Perintah | Deskripsi |
 | :--- | :--- |
 | `.help` | Menampilkan menu bantuan dinamis |
+| `.eval <code>` | Eksekusi kode Python secara live (REPL) |
 | `.sh <cmd>` | Mengeksekusi perintah shell di VPS |
-| `.sys` | Menampilkan statistik CPU, RAM, dan Disk |
+| `.speedtest` | Menjalankan Speedtest CLI di VPS |
+| `.ip [ip]` | Mencari detail lokasi dan ISP dari IP |
 | `.vstk` | Mengubah video/GIF (reply) menjadi sticker video |
 | `.dl <url>` | Download media universal ke Telegram |
 | `.leech <url>` | Download file besar via Aria2 ke Telegram |
 | `.ask <teks>` | Interaksi langsung dengan Gemini AI |
-| `.summarize` | Merangkum 50 pesan terakhir di grup |
-| `.purge` | Menghapus pesan secara massal (reply ke awal) |
-| `.approve` | Menyetujui user di Private Message (PM) |
+| `.tr <lang>` | Penerjemah cerdas (Gemini AI) |
+| `.tts <teks>` | Mengubah teks menjadi Voice Note |
+| `.weather <kota>`| Info cuaca real-time |
 
 ## Struktur Proyek
 
 - `core/`: Client MTProto dan manajemen Database (JSON).
-- `plugins/`: Modul fitur (Admin, AI, Media, System, dll).
+- `plugins/`: Modul fitur (Admin, AI, Media, System, Network, Dev, dll).
 - `utils/`: Wrapper asinkron untuk Shell, Aria2, dan FFmpeg.
 - `downloads/`: Direktori sementara untuk pemrosesan file.
 
