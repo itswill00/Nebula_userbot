@@ -7,6 +7,7 @@ from hydrogram import Client, filters
 from hydrogram.types import Message
 from dotenv import load_dotenv
 from core.database import LocalDB
+from core.decorators import CMD_HELP
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 load_dotenv()
@@ -37,11 +38,12 @@ class NebulaBot(Client):
             plugins=dict(root="plugins"),
             workdir=ROOT_DIR,
             device_model="Nebula Master",
-            app_version="1.5.0"
+            app_version="1.5.1"
         )
         self.db = LocalDB(os.path.join(ROOT_DIR, "nebula_db.json"))
         self.strings = {}
-        self.cmd_help = {} # Registry: {kategori: {cmd: info}}
+        # Gunakan registry global
+        self.cmd_help = CMD_HELP
         self.scheduler = AsyncIOScheduler()
         self._load_all_strings()
         
@@ -60,6 +62,7 @@ class NebulaBot(Client):
 
     def _load_all_strings(self):
         string_path = os.path.join(ROOT_DIR, "strings")
+        if not os.path.exists(string_path): return
         for lang_file in os.listdir(string_path):
             if lang_file.endswith(".json"):
                 lang_code = lang_file.split(".")[0]
@@ -69,22 +72,6 @@ class NebulaBot(Client):
     async def get_string(self, key, default=None):
         lang = await self.db.get("lang", "id")
         return self.strings.get(lang, self.strings.get("id", {})).get(key, default or key)
-
-    # --- THE POWERFUL DECORATOR (Userge/Ultroid Style) ---
-    
-    def on_cmd(self, command, category="General", info="Belum ada info."):
-        """
-        Dekorator kustom untuk registrasi perintah otomatis.
-        """
-        if category not in self.cmd_help:
-            self.cmd_help[category] = {}
-        
-        # Simpan metadata bantuan
-        self.cmd_help[category][command] = info
-        
-        # Kembalikan filter standar Hydrogram
-        prefix = "." # Bisa dibuat dinamis dari DB nanti
-        return self.on_message(filters.command(command, prefixes=prefix) & filters.me)
 
     async def fast_edit(self, message: Message, text: str, parse_mode=None):
         try:
@@ -99,7 +86,7 @@ class NebulaBot(Client):
             self.scheduler.start()
         if self.assistant:
             await self.assistant.start()
-        LOGS.info("Nebula Engine 1.5.0 (Ultra-Framework) Active.")
+        LOGS.info("Nebula Engine 1.5.1 (Userge Style) Active.")
 
     async def stop(self, *args):
         await super().stop()
