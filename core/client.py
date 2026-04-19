@@ -44,6 +44,7 @@ class NebulaBot(Client):
         self.strings = {}
         self.cmd_help = CMD_HELP
         self.scheduler = AsyncIOScheduler()
+        self.start_time = time.time()
         self._load_all_strings()
         
         # Log Channel Configuration

@@ -1,46 +1,94 @@
 import time
 import os
 import psutil
-from hydrogram import Client
+import platform
+from datetime import datetime
+from hydrogram import Client, filters
 from hydrogram.types import Message
-from utils.shell import async_exec
 from core.decorators import on_cmd
 
-@Client.on_message(on_cmd("sh", category="System", info="Eksekusi terminal (bash)."))
-async def shell_runner(client, message: Message):
-    if len(message.command) < 2:
-        return await message.edit("`Coba kasih perintah terminalnya apa.`")
-    cmd = message.text.split(maxsplit=1)[1]
-    await message.edit("`Siap, lagi aku kerjain...`")
-    result = await async_exec(cmd)
-    await message.edit(f"**$** `{cmd}`\n\n**Output:**\n```bash\n{result}\n```")
+def get_readable_time(seconds: int) -> str:
+    count = 0
+    ping_time = ""
+    time_list = []
+    time_suffix_list = ["detik", "menit", "jam", "hari"]
 
-@Client.on_message(on_cmd("sys", category="System", info="Pantau kesehatan server."))
-async def system_stats(client, message: Message):
-    cpu = psutil.cpu_percent(interval=0.5)
-    mem = psutil.virtual_memory()
-    disk = psutil.disk_usage('/')
-    stats = (
-        "📊 **Laporan Kondisi Server:**\n\n"
-        f"**Beban CPU:** `{cpu}%` (Lagi santai)" if cpu < 50 else f"**Beban CPU:** `{cpu}%` (Lagi kerja keras nih!)"
-        f"\n**Pemakaian RAM:** `{mem.percent}%` dari total `{mem.total // (1024**2)}MB`"
-        f"\n**Sisa Disk:** `{100 - disk.percent}%` lagi kosong."
+    while count < 4:
+        count += 1
+        remainder, result = divmod(seconds, 60) if count < 3 else divmod(seconds, 24)
+        if seconds == 0 and remainder == 0:
+            break
+        time_list.append(int(result))
+        seconds = int(remainder)
+
+    for x in range(len(time_list)):
+        time_list[x] = str(time_list[x]) + " " + time_suffix_list[x]
+    if len(time_list) == 4:
+        ping_time += time_list.pop() + ", "
+
+    time_list.reverse()
+    ping_time += ":".join(time_list)
+
+    return ping_time
+
+def get_size(bytes, suffix="B"):
+    factor = 1024
+    for unit in ["", "K", "M", "G", "T", "P"]:
+        if bytes < factor:
+            return f"{bytes:.2f}{unit}{suffix}"
+        bytes /= factor
+
+@Client.on_message(on_cmd("ping", category="System", info="Cek latensi bot."))
+async def ping_cmd(client, message: Message):
+    start = time.time()
+    ex = await client.fast_edit(message, "🏓 **Pinging...**")
+    end = time.time()
+    duration = round((end - start) * 1000, 2)
+    uptime = get_readable_time(time.time() - client.start_time)
+    await ex.edit(f"🚀 **Pong!**\n\n⏱️ **Latensi:** `{duration}ms`\n⏳ **Uptime:** `{uptime}`")
+
+@Client.on_message(on_cmd("uptime", category="System", info="Cek berapa lama bot berjalan."))
+async def uptime_cmd(client, message: Message):
+    uptime = get_readable_time(time.time() - client.start_time)
+    await client.fast_edit(message, f"🕒 **Nebula Uptime:** `{uptime}`")
+
+@Client.on_message(on_cmd("sysinfo", category="System", info="Informasi sistem lengkap."))
+async def sysinfo_cmd(client, message: Message):
+    uname = platform.uname()
+    boot_time_timestamp = psutil.boot_time()
+    bt = datetime.fromtimestamp(boot_time_timestamp)
+    
+    # CPU
+    cpufreq = psutil.cpu_freq()
+    
+    # Memory
+    svmem = psutil.virtual_memory()
+    
+    # Disk
+    disk_usage = psutil.disk_usage('/')
+
+    res = (
+        "💻 **System Information**\n\n"
+        f"**OS:** `{uname.system} {uname.release}`\n"
+        f"**Node Name:** `{uname.node}`\n"
+        f"**CPU Core:** `{psutil.cpu_count(logical=False)} Cores` / `{psutil.cpu_count(logical=True)} Threads`\n"
+        f"**CPU Speed:** `{cpufreq.max:.2f}Mhz`\n"
+        f"**Total RAM:** `{get_size(svmem.total)}` (`{svmem.percent}% used`)\n"
+        f"**Disk Space:** `{get_size(disk_usage.total)}` (`{disk_usage.percent}% used`)\n"
+        f"**Boot Time:** `{bt.day}/{bt.month}/{bt.year} {bt.hour}:{bt.minute}:{bt.second}`"
     )
-    await client.fast_edit(message, stats)
+    await client.fast_edit(message, res)
 
-@Client.on_message(on_cmd("ping", category="System", info="Tes latensi bot ke Telegram."))
-async def ping_pong(client, message: Message):
-    start_time = time.time()
-    await message.edit("`Bentar, aku cek dulu...`")
-    end_time = time.time()
-    latency = round((end_time - start_time) * 1000, 2)
-    await message.edit(f"**Pong!**\nLatensi aku: `{latency}ms`")
-
-@Client.on_message(on_cmd("update", category="System", info="Perbarui bot ke versi terbaru."))
-async def update_bot(client, message: Message):
-    await message.edit("`Bentar, aku cek dulu ya ke GitHub kalau ada pembaruan...`")
-    out = await async_exec("git pull")
-    if "Already up to date" in out:
-        return await message.edit(f"✅ **Beres!** Aku udah versi paling baru kok.")
-    await message.edit(f"🔄 **Ada pembaruan nih!**\n`{out}`\n\n`Aku update sekarang terus aku restart ya...`")
-    os._exit(0)
+@Client.on_message(on_cmd("usage", category="System", info="Penggunaan sumber daya saat ini."))
+async def usage_cmd(client, message: Message):
+    cpu_usage = psutil.cpu_percent(interval=1)
+    ram_usage = psutil.virtual_memory().percent
+    disk_usage = psutil.disk_usage('/').percent
+    
+    res = (
+        "📊 **Current Resource Usage**\n\n"
+        f"**CPU:** `{cpu_usage}%`\n"
+        f"**RAM:** `{ram_usage}%`\n"
+        f"**Disk:** `{disk_usage}%`"
+    )
+    await client.fast_edit(message, res)

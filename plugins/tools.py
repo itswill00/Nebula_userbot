@@ -1,16 +1,13 @@
 import os
 import aiohttp
+import json
 from gtts import gTTS
 from hydrogram import Client, filters
 from hydrogram.types import Message
-import google.generativeai as genai
-from plugins.ai import model
+from core.decorators import on_cmd
 
-PREFIX = "."
-
-@Client.on_message(filters.command("tts", prefixes=PREFIX) & filters.me)
+@Client.on_message(on_cmd("tts", category="Tools", info="Konversi teks ke Voice Note."))
 async def text_to_speech(client, message: Message):
-    """Konversi teks ke Voice Note (suara)."""
     text = ""
     lang = "id"
     
@@ -21,61 +18,90 @@ async def text_to_speech(client, message: Message):
     elif len(message.command) > 1:
         text = message.text.split(maxsplit=1)[1]
     else:
-        return await message.edit("`Berikan teks atau balas pesan.`")
+        return await client.fast_edit(message, "⚠️ **Kesalahan:** `Berikan teks atau balas pesan.`")
 
-    status = await message.edit("`Speaking...`")
+    status = await client.fast_edit(message, "🎙️ **Memproses TTS...**")
     
     try:
         tts = gTTS(text, lang=lang)
-        tts.save("downloads/tts.ogg")
-        await client.send_voice(message.chat.id, "downloads/tts.ogg", reply_to_message_id=message.id)
+        dest = "downloads/tts.ogg"
+        tts.save(dest)
+        await client.send_voice(message.chat.id, dest, reply_to_message_id=message.id)
         await status.delete()
-        os.remove("downloads/tts.ogg")
+        if os.path.exists(dest):
+            os.remove(dest)
     except Exception as e:
-        await status.edit(f"**TTS Error:** `{str(e)}`")
+        await client.fast_edit(status, f"❌ **TTS Error:** `{str(e)}`")
 
-@Client.on_message(filters.command("tr", prefixes=PREFIX) & filters.me)
-async def translate_text(client, message: Message):
-    """Penerjemah menggunakan Gemini 1.5 Flash (Sangat Akurat)."""
-    if not model:
-        return await message.edit("`API Key Gemini belum diset.`")
-
-    lang = "id"
-    text = ""
-    if len(message.command) > 1:
-        lang = message.command[1]
-        
-    if message.reply_to_message and message.reply_to_message.text:
-        text = message.reply_to_message.text
-    elif len(message.command) > 2:
-        text = message.text.split(maxsplit=2)[2]
+@Client.on_message(on_cmd("json", category="Tools", info="Dapatkan encoding JSON pesan."))
+async def get_json(client, message: Message):
+    reply = message.reply_to_message
+    if not reply:
+        return await client.fast_edit(message, "⚠️ **Kesalahan:** `Balas ke sebuah pesan.`")
+    
+    data = str(reply)
+    if len(data) > 4000:
+        with open("message.json", "w") as f:
+            f.write(data)
+        await client.send_document(message.chat.id, "message.json", caption="📄 **JSON Output**")
+        os.remove("message.json")
     else:
-        return await message.edit("`Balas pesan atau ketik teks. Format: .tr <lang> <text>`")
+        await client.fast_edit(message, f"📄 **JSON Output:**\n\n```json\n{data}\n```")
 
-    prompt = f"Terjemahkan teks berikut ke bahasa {lang}. Hanya berikan hasil terjemahannya saja tanpa penjelasan lain:\n\n{text}"
-    status = await message.edit("`Translating...`")
-    
-    try:
-        response = model.generate_content(prompt)
-        await status.edit(f"**Terjemahan ({lang}):**\n\n`{response.text.strip()}`")
-    except Exception as e:
-        await status.edit(f"**Tr Error:** `{str(e)}`")
-
-@Client.on_message(filters.command("weather", prefixes=PREFIX) & filters.me)
-async def get_weather(client, message: Message):
-    """Mengambil informasi cuaca menggunakan wttr.in secara asinkronus."""
+@Client.on_message(on_cmd("calc", category="Tools", info="Kalkulator matematika sederhana."))
+async def calculator(client, message: Message):
     if len(message.command) < 2:
-        return await message.edit("`Masukkan nama kota.`")
+        return await client.fast_edit(message, "⚠️ **Kesalahan:** `Masukkan ekspresi matematika.`")
     
-    city = message.text.split(maxsplit=1)[1]
-    status = await message.edit(f"`Mencari cuaca di {city}...`")
+    expr = message.text.split(maxsplit=1)[1]
+    try:
+        # Gunakan eval yang aman (hanya angka dan operator dasar)
+        allowed = set("0123456789+-*/(). ")
+        if not all(c in allowed for c in expr):
+            raise ValueError("Karakter tidak diizinkan.")
+        
+        result = eval(expr)
+        await client.fast_edit(message, f"🔢 **Kalkulator**\n\n**Input:** `{expr}`\n**Hasil:** `{result}`")
+    except Exception as e:
+        await client.fast_edit(message, f"❌ **Error:** `{str(e)}`")
+
+@Client.on_message(on_cmd("ipinfo", category="Tools", info="Dapatkan informasi alamat IP."))
+async def ip_info(client, message: Message):
+    if len(message.command) < 2:
+        return await client.fast_edit(message, "⚠️ **Kesalahan:** `Masukkan alamat IP.`")
+    
+    ip = message.command[1]
+    status = await client.fast_edit(message, f"🔍 **Mencari info IP {ip}...**")
     
     async with aiohttp.ClientSession() as session:
-        async with session.get(f"https://wttr.in/{city}?format=%C+%t|%w|%h") as resp:
-            if resp.status == 200:
-                data = (await resp.text()).strip().split("|")
-                if len(data) == 3:
-                    text = f"⛅ **Cuaca di {city.title()}:**\n\n**Suhu:** `{data[0]}`\n**Angin:** `{data[1]}`\n**Kelembapan:** `{data[2]}`"
-                    return await status.edit(text)
+        async with session.get(f"http://ip-api.com/json/{ip}") as resp:
+            data = await resp.json()
+            if data.get("status") == "success":
+                res = (
+                    f"🌐 **IP Information**\n\n"
+                    f"**IP:** `{data.get('query')}`\n"
+                    f"**Country:** `{data.get('country')} ({data.get('countryCode')})`\n"
+                    f"**Region:** `{data.get('regionName')}`\n"
+                    f"**City:** `{data.get('city')}`\n"
+                    f"**ISP:** `{data.get('isp')}`\n"
+                    f"**ASN:** `{data.get('as')}`"
+                )
+                await client.fast_edit(status, res)
+            else:
+                await client.fast_edit(status, "❌ **Gagal mendapatkan info IP.**")
+
+@Client.on_message(on_cmd("shorten", category="Tools", info="Pendekkan URL menggunakan TinyURL."))
+async def shorten_url(client, message: Message):
+    if len(message.command) < 2:
+        return await client.fast_edit(message, "⚠️ **Kesalahan:** `Masukkan URL.`")
     
-    await status.edit("`Gagal mengambil data cuaca.`")
+    url = message.command[1]
+    status = await client.fast_edit(message, "🔗 **Memendekkan URL...**")
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"http://tinyurl.com/api-create.php?url={url}") as resp:
+            if resp.status == 200:
+                short_url = await resp.text()
+                await client.fast_edit(status, f"🔗 **Shortened URL:**\n\n`{short_url}`")
+            else:
+                await client.fast_edit(status, "❌ **Gagal memendekkan URL.**")
