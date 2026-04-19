@@ -9,33 +9,36 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 load_dotenv()
 
-# Log format yang lebih bersih untuk dibaca di Telegram
+# Gunakan path absolut ke root proyek
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("nebula.log"),
+        logging.FileHandler(os.path.join(ROOT_DIR, "nebula.log")),
         logging.StreamHandler()
     ]
 )
 
 class NebulaBot(Client):
     def __init__(self):
-        # Pastikan direktori penting ada
+        # Pastikan direktori penting ada di root
         for folder in ["downloads", "strings", "plugins"]:
-            if not os.path.exists(folder):
-                os.makedirs(folder)
+            target = os.path.join(ROOT_DIR, folder)
+            if not os.path.exists(target):
+                os.makedirs(target)
 
         super().__init__(
             name="nebula",
             api_id=int(os.getenv("API_ID")),
             api_hash=os.getenv("API_HASH"),
             plugins=dict(root="plugins"),
-            workdir=os.getcwd(),
+            workdir=ROOT_DIR,
             device_model="Nebula Master",
             app_version="1.3.0"
         )
-        self.db = LocalDB()
+        self.db = LocalDB(os.path.join(ROOT_DIR, "nebula_db.json"))
         self.strings = {}
         self.scheduler = AsyncIOScheduler()
         self._load_all_strings()
@@ -48,19 +51,20 @@ class NebulaBot(Client):
                 api_id=int(os.getenv("API_ID")),
                 api_hash=os.getenv("API_HASH"),
                 bot_token=bot_token,
+                workdir=ROOT_DIR,
                 no_updates=False
             )
 
     def _load_all_strings(self):
-        if not os.listdir("strings"):
-            # Fallback jika folder kosong (mencegah crash)
+        string_path = os.path.join(ROOT_DIR, "strings")
+        if not os.listdir(string_path):
             self.strings["id"] = {"PROCESSING": "`Memproses...`"}
             return
 
-        for lang_file in os.listdir("strings"):
+        for lang_file in os.listdir(string_path):
             if lang_file.endswith(".json"):
                 lang_code = lang_file.split(".")[0]
-                with open(f"strings/{lang_file}", "r", encoding="utf-8") as f:
+                with open(os.path.join(string_path, lang_file), "r", encoding="utf-8") as f:
                     self.strings[lang_code] = json.load(f)
 
     async def get_string(self, key, default=None):
