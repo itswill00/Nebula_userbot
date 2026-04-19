@@ -116,7 +116,6 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         else:
             current = await client.parent.db.get(key, False)
             await client.parent.db.set(key, not current)
-            # Kembali ke menu security karena sebagian besar toggle ada di sana
             await callback_query.edit_message_reply_markup(reply_markup=await get_security_menu_markup(client.parent))
 
     # 3. Logika Penutupan
@@ -126,3 +125,22 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
     
     elif data == "info_afk":
         await callback_query.answer("Gunakan perintah .afk untuk mengubah status.", show_alert=True)
+
+# --- CONTACT BOT LOGIC ---
+async def assistant_contact_handler(client, message: Message):
+    """Menangani pesan dari orang asing ke Assistant Bot."""
+    me = client.parent.me
+    if message.from_user.id == me.id:
+        return
+
+    log_text = (
+        f"📩 **Pesan Baru di Assistant Bot**\n\n"
+        f"**Dari:** {message.from_user.mention} (`{message.from_user.id}`)\n"
+        f"**Pesan:** {message.text or '[Media]'}"
+    )
+    
+    try:
+        await client.parent.send_message("me", log_text)
+        await message.reply("✅ Pesan kamu telah diteruskan ke Bos saya.")
+    except Exception:
+        pass
