@@ -2,6 +2,8 @@ from hydrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton,
 from core.decorators import CMD_HELP
 
 
+from utils.media import catbox_upload
+
 # Konfigurasi Grid
 COLUMNS = 3
 ROWS = 4
@@ -15,12 +17,22 @@ async def get_banner_path(client, db):
     if banner:
         return banner
 
-    # Jika tidak ada di DB, cek default_banner_file_id
+    # Cek apakah sudah ada URL default yang tersimpan
+    default_url = await db.get("default_banner_url")
+    if default_url:
+        return default_url
+
+    # Jika belum ada, upload ke Catbox untuk dapatkan URL publik
+    url = await catbox_upload(DEFAULT_BANNER)
+    if url:
+        await db.set("default_banner_url", url)
+        return url
+
+    # Fallback ke file_id jika upload gagal
     default_fid = await db.get("default_banner_file_id")
     if default_fid:
         return default_fid
 
-    # Jika belum ada file_id, upload dulu (sekali saja)
     if hasattr(client, "log_channel"):
         try:
             msg = await client.send_photo(client.log_channel, DEFAULT_BANNER)

@@ -23,8 +23,8 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
         )
         markup = await get_help_markup(page=0)
 
-        # Cek apakah banner adalah URL atau file_id/local path
-        if isinstance(banner, str) and (banner.startswith("http") or "/" in banner):
+        # Cek apakah banner adalah URL publik (Catbox/Telegraph/dll)
+        if isinstance(banner, str) and banner.startswith("http"):
             result = InlineQueryResultPhoto(
                 photo_url=banner,
                 title="Nebula Help Menu",
@@ -32,6 +32,7 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
                 caption=text,
                 reply_markup=markup
             )
+
         else:
             # Jika bukan URL/Path, anggap sebagai file_id
             result = InlineQueryResultCachedPhoto(
