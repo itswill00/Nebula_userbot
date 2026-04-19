@@ -27,7 +27,7 @@ if __name__ == "__main__":
         bot.assistant.add_handler(
             CallbackQueryHandler(
                 assistant_callback_handler,
-                filters.regex(r"^(cat_|all_|pdet_|utog_|back_|close_|info_)")
+                filters.regex(r"^(cat_|all_|pdet_|utog_|back_|close_|change_|page_|afk_)")
             )
         )
 

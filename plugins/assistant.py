@@ -1,4 +1,6 @@
+import os
 from hydrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from hydrogram.errors import MessageNotModified
 from core.decorators import CMD_HELP
 from utils.media import catbox_upload
 
@@ -172,40 +174,52 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
 
     if data == "back_to_main":
         await callback_query.answer()
-        await callback_query.edit_message_text(
-            f"{banner_prefix}🌌 **Nebula Engine - Help Menu**\nPilih kategori untuk menjelajahi plugin:",
-            reply_markup=await get_main_menu_markup(),
-            disable_web_page_preview=False
-        )
+        try:
+            await callback_query.edit_message_text(
+                f"{banner_prefix}🌌 **Nebula Engine - Help Menu**\nPilih kategori untuk menjelajahi plugin:",
+                reply_markup=await get_main_menu_markup(),
+                disable_web_page_preview=False
+            )
+        except MessageNotModified:
+            pass
 
     elif data == "change_banner":
         await callback_query.answer()
         await userbot.db.set("waiting_for_banner", True)
-        await callback_query.edit_message_text(
-            f"{banner_prefix}🖼️ **Ganti Banner Help Menu**\n\n"
-            "Silakan kirimkan sebuah **Foto** ke bot ini untuk dijadikan banner baru.",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Batal", callback_data="back_to_main")]]),
-            disable_web_page_preview=False
-        )
+        try:
+            await callback_query.edit_message_text(
+                f"{banner_prefix}🖼️ **Ganti Banner Help Menu**\n\n"
+                "Silakan kirimkan sebuah **Foto** ke bot ini untuk dijadikan banner baru.",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Batal", callback_data="back_to_main")]]),
+                disable_web_page_preview=False
+            )
+        except MessageNotModified:
+            pass
 
     elif data.startswith("all_plugins_"):
         await callback_query.answer()
         page = int(data.split("_")[-1])
-        await callback_query.edit_message_text(
-            f"{banner_prefix}🛠 **All Utilities**\nGeser ke kiri/kanan untuk melihat semua plugin:",
-            reply_markup=await get_plugin_grid_markup("ALL", page),
-            disable_web_page_preview=False
-        )
+        try:
+            await callback_query.edit_message_text(
+                f"{banner_prefix}🛠 **All Utilities**\nGeser ke kiri/kanan untuk melihat semua plugin:",
+                reply_markup=await get_plugin_grid_markup("ALL", page),
+                disable_web_page_preview=False
+            )
+        except MessageNotModified:
+            pass
 
     elif data.startswith("cat_"):
         await callback_query.answer()
         _, category, page = data.split("_")
         page = int(page)
-        await callback_query.edit_message_text(
-            f"{banner_prefix}📂 **Kategori:** `{category}`\nPilih plugin untuk detail & kontrol:",
-            reply_markup=await get_plugin_grid_markup(category, page),
-            disable_web_page_preview=False
-        )
+        try:
+            await callback_query.edit_message_text(
+                f"{banner_prefix}📂 **Kategori:** `{category}`\nPilih plugin untuk detail & kontrol:",
+                reply_markup=await get_plugin_grid_markup(category, page),
+                disable_web_page_preview=False
+            )
+        except MessageNotModified:
+            pass
 
     elif data.startswith("pdet_"):
         await callback_query.answer()
@@ -223,13 +237,16 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         else:
             help_text += "_Tidak ada informasi perintah._"
 
-        await callback_query.edit_message_text(
-            help_text,
-            reply_markup=await get_plugin_detail_markup(
-                userbot, category, plugin_name, back_page, back_cat
-            ),
-            disable_web_page_preview=False
-        )
+        try:
+            await callback_query.edit_message_text(
+                help_text,
+                reply_markup=await get_plugin_detail_markup(
+                    userbot, category, plugin_name, back_page, back_cat
+                ),
+                disable_web_page_preview=False
+            )
+        except MessageNotModified:
+            pass
 
     elif data.startswith("utog_"):
         await callback_query.answer("⚡ Diupdate...")
@@ -243,16 +260,22 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
             curr = await userbot.db.get(key, False)
             await userbot.db.set(key, not curr)
 
-        await callback_query.edit_message_reply_markup(
-            reply_markup=await get_plugin_detail_markup(userbot, category, plugin_name, back_page, back_cat)
-        )
+        try:
+            await callback_query.edit_message_reply_markup(
+                reply_markup=await get_plugin_detail_markup(userbot, category, plugin_name, back_page, back_cat)
+            )
+        except MessageNotModified:
+            pass
 
     elif data == "close_db":
         await callback_query.answer("🗑 Menutup...")
         if callback_query.message:
             await callback_query.message.delete()
         else:
-            await callback_query.edit_message_text("❌ Menu ditutup.")
+            try:
+                await callback_query.edit_message_text("❌ Menu ditutup.")
+            except MessageNotModified:
+                pass
 
     elif data == "page_info":
         await callback_query.answer("Klik Prev/Next untuk menggeser.", show_alert=True)
@@ -279,9 +302,15 @@ async def assistant_contact_handler(client, message: Message):
                 if url:
                     await userbot.db.set("help_banner", url)
                     await userbot.db.delete("waiting_for_banner")
-                    return await status.edit("✅ **Banner Help Menu berhasil diperbarui!**")
+                    try:
+                        return await status.edit("✅ **Banner Help Menu berhasil diperbarui!**")
+                    except MessageNotModified:
+                        pass
                 else:
-                    return await status.edit("❌ **Gagal mengupload banner baru ke Catbox.**")
+                    try:
+                        return await status.edit("❌ **Gagal mengupload banner baru ke Catbox.**")
+                    except MessageNotModified:
+                        pass
                 
             elif message.text == "/cancel" or message.text == "Batal":
                 await userbot.db.delete("waiting_for_banner")
