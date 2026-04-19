@@ -85,10 +85,11 @@ async def sys_info(client, message: Message):
 async def restart_bot(client, message: Message):
     msg = await client.fast_edit(message, "✦ Sedang merestart...")
 
-    # Simpan konteks untuk pemulihan post-restart
+    # Simpan konteks untuk pemulihan post-restart (Termasuk Timestamp Downtime)
     await client.db.set("restart_info", {
         "chat_id": message.chat.id,
-        "msg_id": msg.id
+        "msg_id": msg.id,
+        "time": time.time()
     })
 
     # Eksekusi restart proses (Robust pattern via sys.argv)
@@ -132,10 +133,11 @@ async def update_bot(client, message: Message):
 
     await msg.edit(f"✦ Pembaruan selesai.\n`{pull_out}`\n\nSedang merestart...")
 
-    # Simpan status untuk pemulihan pasca restart
+    # Simpan status untuk pemulihan pasca restart (Termasuk Timestamp Downtime)
     await client.db.set("restart_info", {
         "chat_id": message.chat.id,
-        "msg_id": msg.id
+        "msg_id": msg.id,
+        "time": time.time()
     })
 
     # Restart (Robust pattern via sys.argv)

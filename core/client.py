@@ -72,6 +72,7 @@ class NebulaBot(Client):
 
         self.scheduler = AsyncIOScheduler()
         self.start_time = time.time()
+        self._media_cache = {}  # Session Media Cache (Ultroid-tier speed)
 
         # Inisialisasi The Brain (Arbiter System)
         self.brain = NebulaBrain(self)
@@ -111,6 +112,7 @@ class NebulaBot(Client):
             self.assistant.me = await self.assistant.get_me()
 
         await super().start()
+        self.start_time = time.time()  # Reset start_time to now
         
         # Auto-detect Owner ID jika tidak diset di env
         if not self.owner_id:
@@ -122,11 +124,21 @@ class NebulaBot(Client):
         # Pemulihan pasca restart
         restart_data = await self.db.get("restart_info")
         is_restarted = False
+        downtime_str = None
         if restart_data:
             chat_id = restart_data.get("chat_id")
             msg_id = restart_data.get("msg_id")
+            old_time = restart_data.get("time")
+            
+            if old_time:
+                dt = time.time() - old_time
+                downtime_str = f"{int(dt)}s" if dt < 60 else f"{int(dt/60)}m {int(dt%60)}s"
+
             try:
-                await self.edit_message_text(chat_id, msg_id, "✅ **Nebula Berhasil Direstart!**")
+                msg_status = "✅ **Nebula Berhasil Direstart!**"
+                if downtime_str:
+                    msg_status += f"\n📉 Downtime: `{downtime_str}`"
+                await self.edit_message_text(chat_id, msg_id, msg_status)
                 is_restarted = True
             except Exception:
                 pass
@@ -134,7 +146,7 @@ class NebulaBot(Client):
 
         # Notifikasi Startup (Telemetri DASHBOARD)
         if self.log_channel and self.assistant:
-            await self._send_startup_notice(is_restarted)
+            await self._send_startup_notice(is_restarted, downtime_str)
 
     @property
     def banner_url(self):
@@ -192,19 +204,34 @@ class NebulaBot(Client):
 
     async def send_card(self, chat_id, text, buttons=None, reply_to_message_id=None):
         """Kirim tampilan dengan banner visual (Bulletproof Engine)."""
-        # 1. Cek File ID dari Cache (Paling Cepat & Stabil)
+        # 1. Cek Session Cache (Ultra Speed)
+        if chat_id in self._media_cache:
+            try:
+                return await self.assistant.send_photo(
+                    chat_id,
+                    photo=self._media_cache[chat_id],
+                    caption=text,
+                    reply_markup=buttons,
+                    reply_to_message_id=reply_to_message_id
+                )
+            except Exception:
+                del self._media_cache[chat_id]
+
+        # 2. Cek Database Cache
         cached_id = await self.db.get("banner_file_id")
         
         # Coba Kirim via Cache (Paling Stabil)
         if cached_id:
             try:
-                return await self.assistant.send_photo(
+                msg = await self.assistant.send_photo(
                     chat_id,
                     photo=cached_id,
                     caption=text,
                     reply_markup=buttons,
                     reply_to_message_id=reply_to_message_id
                 )
+                self._media_cache[chat_id] = cached_id
+                return msg
             except Exception as e:
                 LOGS.warning(f"Media Engine Cache Failed: {e}")
 
@@ -243,7 +270,7 @@ class NebulaBot(Client):
                 disable_web_page_preview=True
             )
 
-    async def _send_startup_notice(self, is_restarted):
+    async def _send_startup_notice(self, is_restarted, downtime=None):
         """Kirim kartu telemetri startup via Assistant."""
         try:
             # 1. Bersihkan Log Startup Sebelumnya
@@ -254,9 +281,11 @@ class NebulaBot(Client):
                 except Exception:
                     pass
 
-            # 2. Kumpulkan Metrik Sistem
-            os_name = platform.system()
-            arch = platform.machine()
+            # 2. Kumpulkan Metrik Sistem (Ultroid-tier High Density)
+            uname = platform.uname()
+            os_name = f"{platform.system()}"
+            arch = uname.machine
+            kernel = uname.release
             py_ver = platform.python_version()
             ram = psutil.virtual_memory().percent
             
@@ -264,17 +293,21 @@ class NebulaBot(Client):
             plugin_list = [f for f in os.listdir("plugins") if f.endswith(".py") and not f.startswith("_")]
             plugin_count = len(plugin_list)
 
-            # 3. Desain Laporan (Zero Gimmick HUD)
+            # 3. Desain Laporan (Zero Gimmick HUD - Enhanced)
             status_text = "DIRESTART" if is_restarted else "AKTIF"
+            header_ico = "🔄" if is_restarted else "🚀"
             
             card_text = (
-                f"**Nebula {status_text}**\n"
+                f"{header_ico} **Nebula {status_text}**\n"
                 f"━━━━━━━━━━━━━━━\n"
-                f"Pemilik  : {self.me.first_name}\n"
                 f"Sistem   : {os_name} ({arch})\n"
-                f"Fitur    : {plugin_count}\n"
-                f"Status   : {ram}% Load"
+                f"Kernel   : {kernel}\n"
+                f"Engine   : {py_ver} / 1.6.0\n"
+                f"Fitur    : {plugin_count} total\n"
+                f"Status   : {ram}% Memory Load"
             )
+            if downtime:
+                card_text += f"\n📉 Downtime : {downtime}"
 
             # 4. Tombol Fungsional
             buttons = InlineKeyboardMarkup([
