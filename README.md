@@ -1,63 +1,72 @@
-# Nebula Userbot (God Mode)
+# 🌌 Nebula Userbot (God Mode)
 
-Modular MTProto Userbot yang dioptimalkan untuk performa tinggi pada berbagai platform. Memanfaatkan Hydrogram (Asyncio), Aria2 RPC untuk unduhan cepat, dan Gemini 1.5 Flash untuk integrasi AI.
+Selamat datang di **Nebula**! Ini bukan sekadar bot biasa, melainkan asisten pribadi digital yang dirancang untuk membantu kamu mengelola Telegram dengan lebih cerdas, cepat, dan tentu saja, lebih manusiawi. 
+
+Nebula dibangun di atas fondasi **Hydrogram** yang kencang, dibekali kecerdasan **Gemini 1.5 Flash**, dan siap mendampingi kamu di berbagai platform—mulai dari VPS kelas atas sampai HP Android (Termux) kesayanganmu.
 
 ---
 
-## 🚀 Pilihan Instalasi
+## ✨ Apa Saja yang Bisa Nebula Lakukan?
 
-### Opsi A: Linux VPS (Rekomendasi - Docker)
-Gunakan opsi ini untuk stabilitas 24/7 dan manajemen yang mudah.
+Nebula dibekali banyak "kekuatan" yang bisa kamu akses langsung dari chat:
+
+- **🧠 Asisten Pintar**: Tanya apa saja atau minta ringkasan obrolan grup yang berisik lewat integrasi Gemini AI.
+- **🎬 Pengolah Media**: Ubah video jadi sticker cantik atau download konten dari berbagai media sosial dalam sekejap.
+- **🛡 Keamanan Ketat**: Lindungi privasi kamu dengan *PM Guard* dan pantau pesan yang dihapus orang lain secara otomatis.
+- **🚀 Akses Sistem**: Kontrol server atau VPS kamu langsung dari Telegram seolah-olah kamu sedang di depan terminal.
+- **🤖 Mode Asisten**: Gunakan bot asisten sebagai gerbang komunikasi agar akun utama kamu tetap bersih dari spam.
+
+---
+
+## 🛠 Panduan Memulai
+
+Pilih jalur yang paling nyaman buat kamu:
+
+### Opsi 1: Lewat Linux VPS (Paling Stabil)
+Cocok buat kamu yang ingin Nebula selalu siap 24/7 tanpa henti.
 1. `git clone https://github.com/itswill00/Nebula_userbot.git && cd Nebula_userbot`
-2. `nano .env` (Isi kredensial)
-3. `pip install -r requirements.txt && python3 main.py` (Login OTP pertama kali)
-4. `docker-compose up -d --build` (Jalankan permanen)
+2. Isi kredensial kamu di file `.env` (API ID, Hash, dll).
+3. Jalankan `pip install -r requirements.txt && python3 main.py` untuk login pertama kali.
+4. Setelah itu, jalankan `docker-compose up -d --build` agar dia jalan terus di latar belakang.
 
-### Opsi B: Termux (Android)
-Gunakan opsi ini untuk menjalankan bot langsung dari HP Android Anda.
-1. `pkg install git -y`
-2. `git clone https://github.com/itswill00/Nebula_userbot.git && cd Nebula_userbot`
-3. `bash setup.sh`
-4. `nano .env` (Isi kredensial)
-5. `python3 main.py`
-*Tips: Gunakan `termux-wake-lock` agar bot tidak mati saat layar HP mati.*
-
-### Opsi C: Local Windows / PaaS (Heroku/Railway)
-Untuk Windows, pastikan Python, FFmpeg, dan Aria2 terinstal di PATH.
-Untuk Heroku, cukup hubungkan repositori dan gunakan `Procfile` yang tersedia. Tambahkan buildpack Python, FFmpeg, dan Aria2.
+### Opsi 2: Lewat Termux (Di HP Android)
+Praktis dan bisa dibawa ke mana saja.
+1. Buka Termux, lalu ketik: `pkg install git -y`
+2. Clone Nebula: `git clone https://github.com/itswill00/Nebula_userbot.git && cd Nebula_userbot`
+3. Jalankan `bash setup.sh` untuk menyiapkan semuanya secara otomatis.
+4. Isi file `.env`, lalu jalankan bot dengan `./run.sh`.
 
 ---
 
-## 🎮 Perintah Utama (Prefix: `.`)
+## 🎮 Perintah Favorit (Prefix: `.`)
 
-| Perintah | Deskripsi |
+| Perintah | Apa Gunanya? |
 | :--- | :--- |
-| `.help` | Menu bantuan interaktif (Tombol Inline) |
-| `.db` | Dashboard Pusat Kontrol (Setting Bot) |
-| `.eval` | Eksekusi kode Python (REPL) |
-| `.sh` | Eksekusi perintah shell / terminal |
-| `.vstk` | Konversi video ke sticker video |
-| `.dl` | Universal Downloader (YouTube/TikTok/dll) |
-| `.leech`| Download file besar via Aria2 ke Telegram |
-| `.ask` | Tanya jawab dengan Gemini AI |
-| `.summarize`| Merangkum 50 pesan terakhir di grup |
+| `.help` | Buka menu bantuan yang cantik (dengan tombol!). |
+| `.db` | Masuk ke Pusat Kontrol buat ganti-ganti pengaturan bot. |
+| `.ask` | Tanya-tanya atau ngobrol sama AI Gemini. |
+| `.summarize` | Minta ringkasan apa aja yang diomongin orang di grup. |
+| `.vstk` | Bikin sticker video dari video apa aja. |
+| `.leech` | Download file besar ke VPS terus kirim ke Telegram kamu. |
+| `.sys` | Cek kondisi server kamu (CPU, RAM, dll) dengan bahasa santai. |
+| `.update` | Update bot kamu ke versi terbaru langsung dari chat. |
 
 ---
 
-## ⚙️ Konfigurasi Environment (`.env`)
-| Variabel | Deskripsi |
-| :--- | :--- |
-| `API_ID` | API ID dari my.telegram.org |
-| `API_HASH` | API Hash dari my.telegram.org |
-| `BOT_TOKEN` | Token Assistant dari @BotFather |
-| `GEMINI_API_KEY`| Key dari Google AI Studio |
+## ⚙️ Mengatur Segalanya (`.env`)
+
+Kamu butuh beberapa kunci buat nyalain Nebula:
+- **API_ID** & **API_HASH**: Ambil di [my.telegram.org](https://my.telegram.org).
+- **BOT_TOKEN**: Bikin asisten kamu di [@BotFather](https://t.me/BotFather).
+- **GEMINI_API_KEY**: Kunci kecerdasan AI kamu dari [Google AI Studio](https://aistudio.google.com/).
 
 ---
 
-## 🛡 Keamanan & Privasi
-- Data sesi (`.session`) disimpan secara lokal dan tidak akan pernah terunggah ke Git.
-- Fitur **PM Guard** melindungi Anda dari spammer di pesan pribadi.
-- Fitur **G-Ban** memungkinkan Anda memblokir user nakal dari semua grup secara global.
+## ❤️ Keamanan Kamu Utama
+Nebula sangat menjaga rahasia. Semua data login kamu (`.session`) dan kunci rahasia (`.env`) tersimpan aman di perangkat kamu sendiri dan nggak akan pernah tersebar. 
 
 ## 📜 Lisensi
-Distributed under the MIT License. Lihat `LICENSE` untuk informasi lebih lanjut.
+Nebula menggunakan Lisensi MIT. Bebas kamu pakai dan kembangkan lagi!
+
+---
+*Dibuat dengan dedikasi untuk kenyamanan kamu.*
