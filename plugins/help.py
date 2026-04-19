@@ -1,24 +1,33 @@
 from hydrogram import Client, filters
 from hydrogram.types import Message
+from core.decorators import on_cmd
 
-PREFIX = "."
-
-@Client.on_message(filters.command("help", prefixes=PREFIX) & filters.me)
+@Client.on_message(on_cmd("help", category="Config", info="Menampilkan menu bantuan interaktif."))
 async def help_menu(client, message: Message):
     """Menampilkan menu bantuan via Inline Query (Ultroid Style)."""
     
+    # 1. Cek keberadaan asisten
     if not client.assistant:
-        return await message.edit("`Bot Assistant tidak aktif.`")
+        return await client.fast_edit(message, "⚠️ **Kesalahan:** Bot Assistant tidak aktif.")
 
-    # Ambil username bot assistant
-    bot_info = await client.assistant.get_me()
-    bot_username = bot_info.username
+    # 2. Cek apakah asisten sudah terkoneksi/start (Mencegah ConnectionError)
+    if not getattr(client.assistant, "me", None):
+        try:
+            # Jika belum ada cache me, coba ambil dengan timeout pendek
+            bot_info = await client.assistant.get_me()
+            bot_username = bot_info.username
+        except Exception:
+            return await client.fast_edit(message, "⏳ **Menghubungkan...** Asisten sedang bersiap, coba lagi sebentar.")
+    else:
+        bot_username = client.assistant.me.username
 
     try:
         # Picu inline query ke bot sendiri
-        # Ini memungkinkan pengiriman tombol tanpa bot harus ada di grup
         results = await client.get_inline_bot_results(bot_username, "help")
         
+        if not results or not results.results:
+            return await client.fast_edit(message, "❌ **Gagal:** Menu bantuan tidak ditemukan di asisten.")
+
         # Kirim hasil pertama dari query tersebut
         await client.send_inline_bot_result(
             chat_id=message.chat.id,
@@ -31,4 +40,4 @@ async def help_menu(client, message: Message):
         await message.delete()
         
     except Exception as e:
-        await message.edit(f"❌ **Gagal memicu Inline Menu:**\n`{str(e)}`")
+        await client.fast_edit(message, f"❌ **Gagal memicu Inline Menu:**\n`{str(e)}`")

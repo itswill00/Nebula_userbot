@@ -118,15 +118,20 @@ class NebulaBot(Client):
             return message
 
     async def start(self):
+        # Jalankan Assistant Bot Terlebih Dahulu (Penting agar .help tidak error saat startup)
+        if self.assistant:
+            await self.assistant.start()
+            # Cache informasi asisten di bot utama agar akses lebih cepat
+            self.assistant.me = await self.assistant.get_me()
+
         await super().start()
         if not self.scheduler.running:
             self.scheduler.start()
-        if self.assistant:
-            await self.assistant.start()
         
         # Kirim notifikasi bot hidup
         await self.send_log("🚀 **Nebula Engine v1.6.0 is Online!**\nAll systems functional.")
         LOGS.info("Nebula Engine 1.6.0 Active.")
+
 
     async def stop(self, *args):
         await super().stop()
