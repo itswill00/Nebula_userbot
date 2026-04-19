@@ -27,10 +27,16 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
         markup = await get_help_markup(page=0)
         
         # Tampilkan sebagai Foto untuk kesan Premium (Ultroid Style)
+        # PENTING: Inline Photo memerlukan URL Publik, tidak bisa file lokal.
+        photo_url = userbot.banner_url
+        if not photo_url.startswith("http"):
+            # Fallback ke URL publik jika banner_url adalah path lokal
+            photo_url = "https://telegra.ph/file/0c976939988a8f6022ced.jpg"
+
         results.append(
             InlineQueryResultPhoto(
-                photo_url=userbot.banner_url,
-                thumb_url=userbot.banner_url,
+                photo_url=photo_url,
+                thumb_url=photo_url,
                 title="Nebula Help Menu",
                 caption=text,
                 reply_markup=markup
