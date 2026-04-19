@@ -1,12 +1,12 @@
-from hydrogram import Client
 from hydrogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent
+
 
 async def assistant_inline_handler(client, inline_query: InlineQuery):
     # Impor lokal untuk menghindari potensi circular import
     from .assistant import get_help_markup
-    
+
     query = inline_query.query.lower()
-    
+
     if query == "help":
         text = (
             "🌌 **Nebula Engine - Help Menu**\n"
@@ -15,7 +15,7 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
             "Gunakan tombol `«` dan `»` untuk beralih halaman."
         )
         markup = await get_help_markup(page=0)
-        
+
         await inline_query.answer(
             results=[
                 InlineQueryResultArticle(
@@ -27,6 +27,7 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
             ],
             cache_time=1
         )
+
 
 async def help_callback_handler(client, callback_query):
     # Ini akan dihandle oleh assistant_callback_handler di assistant.py
