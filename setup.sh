@@ -1,25 +1,25 @@
 #!/bin/bash
 
-echo "🌌 Nebula Userbot - Universal Setup"
+# Clear terminal
+clear
+
+echo "🌌 Nebula Userbot - Auto Installer"
 echo "-----------------------------------"
 
 # Deteksi Platform
 if [ -d "/data/data/com.termux/files/usr" ]; then
     PLATFORM="termux"
     echo "📍 Platform: Termux (Android)"
-elif [ -f "/etc/debian_version" ]; then
-    PLATFORM="debian"
-    echo "📍 Platform: Debian/Ubuntu"
 else
     PLATFORM="linux"
-    echo "📍 Platform: Generic Linux"
+    echo "📍 Platform: Linux VPS"
 fi
 
 # Install Dependensi Sistem
 echo "📦 Installing system dependencies..."
 if [ "$PLATFORM" = "termux" ]; then
     pkg update && pkg upgrade -y
-    pkg install python ffmpeg aria2 openssl git -y
+    pkg install python ffmpeg aria2 openssl git clang -y
 else
     sudo apt update
     sudo apt install python3 python3-pip ffmpeg aria2 git -y
@@ -29,13 +29,14 @@ fi
 echo "🐍 Installing python requirements..."
 pip3 install -r requirements.txt
 
-# Buat script launcher dengan auto-restart
-echo "🚀 Creating auto-restart launcher..."
+# Jalankan Wizard Interaktif
+python3 core/wizard.py
+
+# Buat run.sh
 cat <<EOF > run.sh
 #!/bin/bash
 aria2c --enable-rpc --rpc-listen-all=false --rpc-listen-port=6800 --max-connection-per-server=10 --rpc-max-request-size=100M --daemon
 while true; do
-    echo "Starting Nebula Userbot..."
     python3 main.py
     echo "Bot stopped/restarting in 5 seconds..."
     sleep 5
@@ -43,8 +44,4 @@ done
 EOF
 chmod +x run.sh
 
-echo "-----------------------------------"
-echo "✅ Setup Selesai!"
-echo "Langkah selanjutnya:"
-echo "1. Isi kredensial di file .env"
-echo "2. Jalankan bot dengan: ./run.sh"
+echo "Semua sudah siap! Gunakan './run.sh' untuk menjalankan bot kamu."
