@@ -29,13 +29,13 @@ async def assistant_contact_handler(client, message: Message):
 
 @Client.on_message(filters.command("db", prefixes=".") & filters.me)
 async def open_dashboard(client, message: Message):
-    """Membuka Dashboard Kontrol melalui Userbot."""
+    """Membuka Dashboard Kontrol melalui Assistant Bot."""
     if not client.assistant:
         return await message.edit("`Assistant Bot (BOT_TOKEN) tidak aktif.`")
     
     text = await client.get_string("DASHBOARD_TEXT")
     
-    # Ambil status saat ini untuk label tombol
+    # Ambil status saat ini
     is_ad = await client.db.get("anti_delete", True)
     is_as = await client.db.get("antispam", False)
     lang = await client.db.get("lang", "id")
@@ -49,11 +49,16 @@ async def open_dashboard(client, message: Message):
             InlineKeyboardButton(f"Language: {lang.upper()}", callback_data="conf_lang_switch")
         ],
         [
-            InlineKeyboardButton("Close Dashboard", callback_data="close_db")
+            InlineKeyboardButton("Tutup Dashboard", callback_data="close_db")
         ]
     ]
     
-    await message.edit(text, reply_markup=InlineKeyboardMarkup(buttons))
+    await message.delete()
+    await client.assistant.send_message(
+        message.chat.id, 
+        text, 
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
 
 # Handler untuk Assistant Bot (CallbackQuery)
 async def assistant_callback_handler(client, callback_query: CallbackQuery):
