@@ -47,6 +47,7 @@ class NebulaBot(Client):
         )
         self.db = LocalDB(os.path.join(ROOT_DIR, "nebula_db.json"))
         self.strings = {}
+        self.cmd_help = {} # Registry untuk menyimpan info perintah
         self.scheduler = AsyncIOScheduler()
         self._load_all_strings()
         
