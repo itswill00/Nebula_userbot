@@ -27,13 +27,13 @@ logging.basicConfig(
 )
 LOGS = logging.getLogger("Nebula")
 
-# Saring log library agar terminal bersih
-logging.getLogger("hydrogram").setLevel(logging.WARNING)
-logging.getLogger("apscheduler").setLevel(logging.WARNING)
-logging.getLogger("httpx").setLevel(logging.WARNING)
+# Tetap saring log library internal agar tidak terlalu spammy
+logging.getLogger("hydrogram").setLevel(logging.ERROR)
+logging.getLogger("apscheduler").setLevel(logging.ERROR)
 
 class NebulaBot(Client):
     def __init__(self):
+        # Tampilkan Banner dengan warna biru
         print("\033[94m" + r"""
     _   __     __            __      
    / | / /__  / /_  __  ____/ /___ _ 
@@ -41,7 +41,7 @@ class NebulaBot(Client):
  / /|  /  __/ /_/ / /_/ / /_/ / /_/ /  
 /_/ |_/\___/_.___/\__,_/\__,_/\__,_/   
         """ + "\033[0m")
-        print("🚀 \033[92mInisialisasi Nebula Engine...\033[0m")
+        LOGS.info("🚀 Inisialisasi Nebula Engine...")
         
         for folder in ["downloads", "strings", "plugins"]:
             target = os.path.join(ROOT_DIR, folder)
