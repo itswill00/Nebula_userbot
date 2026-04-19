@@ -18,10 +18,10 @@ if __name__ == "__main__":
     if bot.assistant:
         bot.assistant.parent = bot
         
-        # Handler Assistant
-        bot.assistant.add_handler(MessageHandler(assistant_contact_handler, filters.private & ~filters.bot))
-        bot.assistant.add_handler(CallbackQueryHandler(assistant_callback_handler, filters.regex(r"^conf_|^close_db$")))
-        bot.assistant.add_handler(CallbackQueryHandler(help_callback_handler, filters.regex(r"^help_")))
+        # 2. Handler untuk Callback Dashboard & Help (Pola hpage, hplug, htog, conf, close)
+        bot.assistant.add_handler(
+            CallbackQueryHandler(assistant_callback_handler, filters.regex(r"^hpage_|^hplug_|^htog_|^conf_|^close_db$"))
+        )
         bot.assistant.add_handler(InlineQueryHandler(assistant_inline_handler))
 
     print("✨ \033[96mNebula Ready! Memulai sistem...\033[0m")

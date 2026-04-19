@@ -4,57 +4,77 @@ from hydrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton,
 from core.decorators import on_cmd, CMD_HELP
 
 # --- CONFIGURATION ---
-PLUGINS_PER_PAGE = 12  # Jumlah plugin per halaman (Grid 4x3 atau 3x4)
+PLUGINS_PER_PAGE = 12
 
 # --- PAGINATION ENGINE ---
 
 def get_all_plugins():
-    """Mengambil daftar semua plugin unik secara flat (tanpa kategori)."""
     all_plugins = []
     for cat in CMD_HELP:
         for plug in CMD_HELP[cat]:
-            if plug not in all_plugins:
+            if (plug, cat) not in all_plugins:
                 all_plugins.append((plug, cat))
     return sorted(all_plugins)
 
 async def get_help_markup(page=0):
-    """Menghasilkan Markup Grid dengan Navigasi Halaman (Prev/Next)."""
     plugins = get_all_plugins()
     count = len(plugins)
-    
-    # Hitung total halaman
     total_pages = (count - 1) // PLUGINS_PER_PAGE
     if page < 0: page = total_pages
     if page > total_pages: page = 0
     
-    # Ambil plugin untuk halaman ini
     start = page * PLUGINS_PER_PAGE
-    stop = start + PLUGINS_PER_PAGE
-    page_plugins = plugins[start:stop]
+    page_plugins = plugins[start : start + PLUGINS_PER_PAGE]
     
     buttons = []
-    # Buat Grid 3 Kolom
     for row in [page_plugins[i:i+3] for i in range(0, len(page_plugins), 3)]:
         buttons.append([
             InlineKeyboardButton(p[0].title(), callback_data=f"hplug_{p[1]}_{p[0]}_{page}") for p in row
         ])
     
-    # Tombol Navigasi (Prev | Page/Total | Next)
-    nav_buttons = []
-    nav_buttons.append(InlineKeyboardButton("«", callback_data=f"hpage_{page-1}"))
-    nav_buttons.append(InlineKeyboardButton(f"{page+1}/{total_pages+1}", callback_data="hpage_info"))
-    nav_buttons.append(InlineKeyboardButton("»", callback_data=f"hpage_{page+1}"))
+    # Navigasi Bawah
+    nav = [
+        InlineKeyboardButton("«", callback_data=f"hpage_{page-1}"),
+        InlineKeyboardButton(f"{page+1}/{total_pages+1}", callback_data="hpage_info"),
+        InlineKeyboardButton("»", callback_data=f"hpage_{page+1}")
+    ]
+    buttons.append(nav)
+    buttons.append([InlineKeyboardButton("🗑 Tutup Menu", callback_data="close_db")])
+    return InlineKeyboardMarkup(buttons)
+
+async def get_plugin_page_markup(client_parent, category, plugin_name, back_page):
+    """Menampilkan detail plugin + TOMBOL KONTROL (Control Center)."""
+    buttons = []
     
-    buttons.append(nav_buttons)
-    buttons.append([InlineKeyboardButton("🗑 Tutup", callback_data="close_db")])
-    
+    # MAP KONTROL (Mengembalikan Fitur yang Hilang)
+    # Menambahkan toggle otomatis jika plugin terdeteksi punya fitur di database
+    if plugin_name == "antispam":
+        state = await client_parent.db.get("antispam", False)
+        buttons.append([InlineKeyboardButton(f"Anti-Spam: {'✅ ON' if state else '❌ OFF'}", callback_data=f"htog_antispam_{category}_{plugin_name}_{back_page}")])
+    elif plugin_name == "pmpermit":
+        state = await client_parent.db.get("pm_permit_enabled", True)
+        buttons.append([InlineKeyboardButton(f"PM Permit: {'✅ ON' if state else '❌ OFF'}", callback_data=f"htog_pm_permit_enabled_{category}_{plugin_name}_{back_page}")])
+    elif plugin_name == "assistant" or plugin_name == "anti_delete":
+        state = await client_parent.db.get("anti_delete", True)
+        buttons.append([InlineKeyboardButton(f"Anti-Delete: {'✅ ON' if state else '❌ OFF'}", callback_data=f"htog_anti_delete_{category}_{plugin_name}_{back_page}")])
+    elif plugin_name == "system":
+        lang = await client_parent.db.get("lang", "id")
+        buttons.append([InlineKeyboardButton(f"Bahasa: {lang.upper()}", callback_data=f"htog_lang_switch_{category}_{plugin_name}_{back_page}")])
+    elif plugin_name == "afk":
+        afk_data = await client_parent.db.get("afk", {"is_afk": False})
+        state = afk_data.get("is_afk")
+        buttons.append([InlineKeyboardButton(f"Status: {'AFK 💤' if state else 'ONLINE ⚡'}", callback_data="info_afk")])
+
+    buttons.append([InlineKeyboardButton("⬅️ Kembali", callback_data=f"hpage_{back_page}")])
     return InlineKeyboardMarkup(buttons)
 
 # --- CALLBACK HANDLERS ---
 
 async def assistant_callback_handler(client, callback_query: CallbackQuery):
     data = callback_query.data
-    me = client.parent.me
+    # Karena ini dijalankan oleh asisten, client.parent adalah Userbot
+    userbot = client.parent if hasattr(client, "parent") else client
+    me = userbot.me
     
     if callback_query.from_user.id != me.id:
         return await callback_query.answer("🚫 Akses Ditolak.", show_alert=True)
@@ -62,58 +82,53 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
     # 1. Navigasi Halaman (Next/Prev)
     if data.startswith("hpage_"):
         if data == "hpage_info":
-            return await callback_query.answer(f"Total Plugin: {len(get_all_plugins())}", show_alert=True)
-            
+            return await callback_query.answer(f"Nebula Engine: {len(get_all_plugins())} Plugins", show_alert=True)
+        
         page = int(data.split("_")[1])
         await callback_query.answer()
-        await callback_query.edit_message_reply_markup(reply_markup=await get_help_markup(page))
+        text = "🌌 **Nebula Engine - Help Menu**\n━━━━━━━━━━━━━━━━━━━━\nPilih plugin untuk melihat detail dan pengaturan."
+        await callback_query.edit_message_text(text, reply_markup=await get_help_markup(page))
 
-    # 2. Detail Plugin
+    # 2. Halaman Detail Plugin (How-To + Control Center)
     elif data.startswith("hplug_"):
         await callback_query.answer()
-        parts = data.split("_", 3)
-        cat, plug, back_page = parts[1], parts[2], parts[3]
+        _, cat, plug, page = data.split("_", 3)
         
         commands = CMD_HELP.get(cat, {}).get(plug, {})
-        text = f"📦 **Plugin:** `{plug.upper()}`\n━━━━━━━━━━━━━━━━━━━━\n"
+        help_text = f"📦 **Plugin:** `{plug.upper()}`\n"
+        help_text += "━━━━━━━━━━━━━━━━━━━━\n"
+        help_text += "**Perintah Tersedia:**\n"
         for cmd, info in commands.items():
-            text += f"• `.{cmd}` : {info}\n"
+            help_text += f"• `.{cmd}` : {info}\n"
         
-        buttons = []
-        # Logic toggles tetap sama...
-        if plug == "antispam":
-            is_as = await client.parent.db.get("antispam", False)
-            buttons.append([InlineKeyboardButton(f"Anti-Spam: {'✅' if is_as else '❌'}", callback_data=f"htog_antispam_{cat}_{plug}_{back_page}")])
-        elif plug == "pmpermit":
-            is_pm = await client.parent.db.get("pm_permit_enabled", True)
-            buttons.append([InlineKeyboardButton(f"PM-Permit: {'✅' if is_pm else '❌'}", callback_data=f"htog_pm_permit_enabled_{cat}_{plug}_{back_page}")])
+        await callback_query.edit_message_text(
+            help_text, 
+            reply_markup=await get_plugin_page_markup(userbot, cat, plug, page)
+        )
 
-        buttons.append([InlineKeyboardButton("⬅️ Kembali", callback_data=f"hpage_{back_page}")])
-        await callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(buttons))
-
-    # 3. Logika Toggle di dalam halaman Help
+    # 3. Logika Kontrol / Toggling (Control Center Logic)
     elif data.startswith("htog_"):
-        parts = data.split("_", 4)
-        key, cat, plug, back_page = parts[1], parts[2], parts[3], parts[4]
-        await callback_query.answer("⚡ Diupdate...")
+        await callback_query.answer("⚡ Sinkronisasi...")
+        _, key, cat, plug, page = data.split("_", 4)
         
-        curr = await client.parent.db.get(key, False)
-        await client.parent.db.set(key, not curr)
+        if key == "lang_switch":
+            curr = await userbot.db.get("lang", "id")
+            await userbot.db.set("lang", "en" if curr == "id" else "id")
+        else:
+            curr = await userbot.db.get(key, False)
+            await userbot.db.set(key, not curr)
         
-        # Refresh halaman detail tersebut
-        # Kita panggil ulang logika hplug dengan callback yang sama
-        await assistant_callback_handler(client, CallbackQuery(
-            id=callback_query.id,
-            from_user=callback_query.from_user,
-            chat_instance=callback_query.chat_instance,
-            message=callback_query.message,
-            data=f"hplug_{cat}_{plug}_{back_page}",
-            client=client
-        ))
+        # Refresh halaman detail plugin tersebut
+        await callback_query.edit_message_reply_markup(
+            reply_markup=await get_plugin_page_markup(userbot, cat, plug, page)
+        )
 
     elif data == "close_db":
-        await callback_query.answer("🗑 Ditutup.")
+        await callback_query.answer("🗑 Menutup...")
         await callback_query.message.delete()
+    
+    elif data == "info_afk":
+        await callback_query.answer("Status AFK hanya bisa diubah melalui perintah .afk", show_alert=True)
 
 # --- CONTACT BOT LOGIC ---
 async def assistant_contact_handler(client, message: Message):
