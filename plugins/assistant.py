@@ -228,12 +228,19 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         action, msg_id = parts[1], int(parts[2])
         
         try:
-            await callback_query.edit_message_text("◈ Mengunduh & Sinkronisasi visual...")
+            await callback_query.edit_message_text("◈ Mengunduh visual...")
             
-            # 1. Ambil pesan asli yang berisi foto
-            source_msg = await client.get_messages(callback_query.message.chat.id, msg_id)
+            # 1. Ambil pesan asli lewat hubungan Reply (Instant & Reliable)
+            source_msg = callback_query.message.reply_to_message
+            
+            # Fallback jika session tidak memuat reply_to_message otomatis
+            if not source_msg:
+                source_msg = await client.get_messages(callback_query.message.chat.id, msg_id)
+
             if not source_msg or not (source_msg.photo or source_msg.document):
-                return await callback_query.edit_message_text("❌ Media kadaluarsa atau tidak ditemukan.")
+                return await callback_query.edit_message_text("❌ Media tidak ditemukan. Silakan upload ulang.")
+
+            await callback_query.edit_message_text("◈ Menyiapkan folder & sinkronisasi...")
 
             # 2. Setup Folder (Robust Path)
             banners_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources", "banners")
@@ -389,6 +396,7 @@ async def assistant_contact_handler(client, message):
         if message.photo or (message.document and message.document.mime_type and "image" in message.document.mime_type):
             return await message.reply(
                 "**Sistem Visual**\n\nDetect: `Visual Baru`\nKonfigurasi sebagai banner?",
+                reply_to_message_id=message.id,
                 reply_markup=InlineKeyboardMarkup([
                     [
                         InlineKeyboardButton("Terapkan (Ganti)", callback_data=f"sw_banner|replace|{message.id}"),
