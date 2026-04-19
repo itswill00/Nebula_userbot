@@ -146,28 +146,43 @@ async def afk_brain_rule(client, ctx):
     return None
 
 
-@Client.on_message(filters.me & filters.outgoing, group=3)
+@Client.on_message(filters.outgoing, group=3)
 async def auto_unafk(client, message: Message):
-    # Jangan matikan AFK jika yang dikirim adalah perintah .afk itu sendiri
-    if message.text and (message.text.startswith(".afk") or message.text.startswith("/afk")):
+    # 1. Pastikan pengirim adalah Pemilik/Userbot ini
+    # (filters.outgoing sudah menyaring ini, tapi kita double check ID untuk akurasi)
+    if not message.from_user or message.from_user.id != client.me.id:
         return
 
+    # 2. Jangan matikan AFK jika yang dikirim adalah perintah .afk baru
+    if message.text and message.text.lower().startswith((".afk", "/afk")):
+        return
+
+    # 3. Dapatkan data AFK
     afk_data = await client.db.get("afk", {"is_afk": False})
-    if afk_data.get("is_afk"):
-        uptime = round(time.time() - afk_data.get("time", time.time()))
-        since = format_duration(uptime)
+    if not afk_data.get("is_afk"):
+        return
 
-        await client.db.set("afk", {"is_afk": False})
+    # 4. Matikan AFK
+    uptime = round(time.time() - afk_data.get("time", time.time()))
+    since = format_duration(uptime)
 
-        status = await client.send_message(
-            "me",
-            f"✅ **Mode AFK dimatikan.**\n"
-            f"Selamat datang kembali, Bos!\n\n"
-            f"**Total AFK:** `{since}`"
-        )
+    await client.db.set("afk", {"is_afk": False})
 
-        AFK_REPLY_CACHE.clear()
-        AFK_MSG_CACHE.clear()
+    # Kirim notifikasi ke Saved Messages (Pesan Tersimpan)
+    status = await client.send_message(
+        "me",
+        f"✅ **Mode AFK dimatikan.**\n"
+        f"Selamat datang kembali, Bos!\n\n"
+        f"**Total AFK:** `{since}`"
+    )
 
-        await asyncio.sleep(5)
+    # Bersihkan Cache Balasan
+    AFK_REPLY_CACHE.clear()
+    AFK_MSG_CACHE.clear()
+
+    # Hapus notifikasi status setelah 5 detik agar Saved Messages tetap bersih
+    await asyncio.sleep(5)
+    try:
         await status.delete()
+    except Exception:
+        pass
