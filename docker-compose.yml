@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  nebula:
+    build: .
+    container_name: nebula_userbot
+    restart: unless-stopped
+    env_file: .env
+    network_mode: host
+    volumes:
+      - ./nebula.session:/app/nebula.session
+      - ./downloads:/app/downloads
