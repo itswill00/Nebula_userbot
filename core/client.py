@@ -121,17 +121,28 @@ class NebulaBot(Client):
             return message
 
     async def start(self):
-        # Jalankan Assistant Bot Terlebih Dahulu (Penting agar .help tidak error saat startup)
+        # Jalankan Assistant Bot Terlebih Dahulu
         if self.assistant:
             await self.assistant.start()
-            # Cache informasi asisten di bot utama agar akses lebih cepat
             self.assistant.me = await self.assistant.get_me()
 
         await super().start()
         if not self.scheduler.running:
             self.scheduler.start()
 
-        # Kirim notifikasi bot hidup
+        # Pemulihan pasca restart
+        restart_data = await self.db.get("restart_info")
+        if restart_data:
+            chat_id = restart_data.get("chat_id")
+            msg_id = restart_data.get("msg_id")
+            try:
+                # Menggunakan edit_message_text untuk kompatibilitas Hydrogram
+                await self.edit_message_text(chat_id, msg_id, "✅ **Nebula Berhasil Direstart!**")
+            except Exception:
+                pass
+            await self.db.delete("restart_info")
+
+        # Kirim notifikasi log
         await self.send_log("🚀 **Nebula v1.6.0 is Online!**\nAll systems functional.")
         LOGS.info("Nebula 1.6.0 Active.")
 
