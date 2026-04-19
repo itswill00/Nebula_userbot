@@ -62,7 +62,12 @@ async def get_plugin_grid_markup(category, page):
     """Grid plugin untuk kategori tertentu."""
     callback_prefix = "all_plugins" if category == "ALL" else f"cat|{category}"
 
-    plugins = get_all_plugins_list()
+    all_plugins = get_all_plugins_list()
+    if category == "ALL":
+        plugins = all_plugins
+    else:
+        plugins = sorted([p for p in all_plugins if p[1] == category])
+
     page_plugins, max_page = paginate_list(plugins, page)
 
     buttons = []
@@ -79,22 +84,22 @@ async def get_plugin_grid_markup(category, page):
         ]
         buttons.append(row)
 
-    # Navigasi Halaman
-    nav = []
-    prev_page = page - 1 if page > 0 else max_page
-    next_page = page + 1 if page < max_page else 0
+    # Navigasi Halaman (Hanya tampil jika lebih dari 1 halaman)
+    if max_page > 0:
+        nav = []
+        prev_page = page - 1 if page > 0 else max_page
+        next_page = page + 1 if page < max_page else 0
 
-    nav.append(InlineKeyboardButton(
-        "« Prev", callback_data=f"{callback_prefix}|{prev_page}")
-    )
-    nav.append(InlineKeyboardButton(
-        f"{page + 1}/{max_page + 1}", callback_data="page_info")
-    )
-    nav.append(InlineKeyboardButton(
-        "Next »", callback_data=f"{callback_prefix}|{next_page}")
-    )
-
-    buttons.append(nav)
+        nav.append(InlineKeyboardButton(
+            "« Prev", callback_data=f"{callback_prefix}|{prev_page}")
+        )
+        nav.append(InlineKeyboardButton(
+            f"{page + 1}/{max_page + 1}", callback_data="page_info")
+        )
+        nav.append(InlineKeyboardButton(
+            "Next »", callback_data=f"{callback_prefix}|{next_page}")
+        )
+        buttons.append(nav)
     buttons.append([
         InlineKeyboardButton("⬅️ Kembali ke Menu",
                              callback_data="back_to_main")
