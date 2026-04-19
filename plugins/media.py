@@ -11,13 +11,13 @@ async def video_sticker_cmd(client, message: Message):
     """Mengubah video balasan menjadi Sticker Video Telegram."""
     replied = message.reply_to_message
     if not replied or not (replied.video or replied.document or replied.animation):
-        return await message.edit("`Balas ke video atau GIF.`")
+        return await message.edit("`Coba balas ke video atau GIF yang mau dijadiin sticker.`")
 
-    status = await message.edit("`Downloading...`")
+    status = await message.edit("`Sabar ya, lagi aku download videonya...`")
     input_path = await replied.download(file_name="downloads/")
     output_path = f"{input_path}.webm"
     
-    await status.edit("`Encoding to WebM (VP9)...`")
+    await status.edit("`Lagi aku proses biar jadi sticker (WebM)...`")
     await video_to_sticker(input_path, output_path)
     
     if os.path.exists(output_path):
@@ -26,7 +26,7 @@ async def video_sticker_cmd(client, message: Message):
         os.remove(input_path)
         os.remove(output_path)
     else:
-        await status.edit("`Gagal mengonversi video.`")
+        await status.edit("`Waduh, maaf ya aku gagal ngolah videonya.`")
 
 @Client.on_message(filters.command("dl", prefixes=PREFIX) & filters.me)
 async def universal_downloader(client, message: Message):

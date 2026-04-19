@@ -17,43 +17,43 @@ PREFIX = "."
 async def ask_gemini(client, message: Message):
     """Tanya jawab dengan Gemini AI."""
     if not model:
-        return await message.edit("`API Key Gemini belum diset di .env.`")
+        return await message.edit("`Waduh, API Key Gemini kamu belum dipasang di .env.`")
     
     if len(message.command) < 2:
-        return await message.edit("`Masukkan pertanyaan.`")
+        return await message.edit("`Mau tanya apa? Ketik pertanyaannya setelah perintah ya.`")
     
     prompt = message.text.split(None, 1)[1]
-    status = await message.edit("`Berpikir...`")
+    status = await message.edit("`Bentar ya, aku mikir dulu...`")
     
     try:
         response = model.generate_content(prompt)
-        await status.edit(f"**Gemini AI:**\n\n{response.text}")
+        await status.edit(f"💡 **Hasil Pemikiran Gemini:**\n\n{response.text}")
     except Exception as e:
-        await status.edit(f"**AI Error:** `{str(e)}`")
+        await status.edit(f"😓 **Aduhh, ada error pas lagi mikir:** `{str(e)}`")
 
 @Client.on_message(filters.command("summarize", prefixes=PREFIX) & filters.me)
 async def summarize_group(client, message: Message):
-    """Merangkum 50 pesan terakhir di grup."""
+    """Merangkum percakapan grup."""
     if not model:
-        return await message.edit("`API Key Gemini belum diset di .env.`")
+        return await message.edit("`API Key Gemini belum ada nih.`")
     
-    status = await message.edit("`Membaca riwayat chat...`")
+    status = await message.edit("`Sabar ya, aku baca-baca dulu riwayat chatnya...`")
     
     messages = []
     async for msg in client.get_chat_history(message.chat.id, limit=50):
         if msg.text:
-            user = msg.from_user.first_name if msg.from_user else "Unknown"
+            user = msg.from_user.first_name if msg.from_user else "Seseorang"
             messages.append(f"{user}: {msg.text}")
     
     if not messages:
-        return await status.edit("`Tidak ada riwayat pesan teks yang bisa dirangkum.`")
+        return await status.edit("`Grupnya sepi banget, nggak ada pesan teks yang bisa aku rangkum.`")
     
     history_text = "\n".join(messages[::-1])
-    prompt = f"Rangkum percakapan berikut secara singkat dan poin-poin penting:\n\n{history_text}"
+    prompt = f"Rangkum percakapan ini layaknya seorang asisten yang sedang melapor ke bosnya. Pakai bahasa yang santai tapi jelas:\n\n{history_text}"
     
-    await status.edit("`Merangkum dengan AI...`")
+    await status.edit("`Lagi aku buatin ringkasannya ya...`")
     try:
         response = model.generate_content(prompt)
-        await status.edit(f"**Ringkasan Percakapan:**\n\n{response.text}")
+        await status.edit(f"📝 **Ringkasan Buat Kamu:**\n\n{response.text}")
     except Exception as e:
-        await status.edit(f"**AI Error:** `{str(e)}`")
+        await status.edit(f"❌ **Gagal ngerangkum nih:** `{str(e)}`")

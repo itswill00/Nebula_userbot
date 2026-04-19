@@ -22,24 +22,24 @@ async def system_stats(client, message: Message):
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage('/')
     stats = (
-        "**[ NEBULA SYSTEM STATS ]**\n\n"
-        f"**CPU:** `{cpu}%`\n"
-        f"**RAM:** `{mem.percent}%` (`{mem.used // (1024**2)}MB / {mem.total // (1024**2)}MB`)\n"
-        f"**Disk:** `{disk.percent}%`\n"
+        "📊 **Laporan Kondisi Server:**\n\n"
+        f"**Beban CPU:** `{cpu}%` (Lagi santai)" if cpu < 50 else f"**Beban CPU:** `{cpu}%` (Lagi kerja keras nih!)"
+        f"\n**Pemakaian RAM:** `{mem.percent}%` dari total `{mem.total // (1024**2)}MB`"
+        f"\n**Sisa Disk:** `{100 - disk.percent}%` lagi kosong."
     )
     await message.edit(stats)
 
 @Client.on_message(filters.command("update", prefixes=PREFIX) & filters.me)
 async def update_bot(client, message: Message):
     """Memperbarui kode dari GitHub dan merestart bot."""
-    await message.edit("`Checking for updates...`")
+    await message.edit("`Bentar, aku cek dulu ya ke GitHub kalau ada pembaruan...`")
     out = await async_exec("git pull")
     
     if "Already up to date" in out:
-        return await message.edit(f"✅ `{out}`")
+        return await message.edit(f"✅ **Beres!** Aku udah versi paling baru kok.")
     
-    await message.edit(f"🔄 **Update Found:**\n`{out}`\n\n`Restarting Nebula...`")
-    os._exit(0) # Docker/Termux (with script) will handle restart
+    await message.edit(f"🔄 **Ada pembaruan nih!**\n`{out}`\n\n`Aku update sekarang terus aku restart ya...`")
+    os._exit(0)
 
 @Client.on_message(filters.command("logs", prefixes=PREFIX) & filters.me)
 async def view_logs(client, message: Message):
