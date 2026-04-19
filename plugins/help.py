@@ -15,12 +15,18 @@ async def help_menu(client, message: Message):
         bot_username = client.assistant.me.username
         results = await client.get_inline_bot_results(bot_username, "help")
 
+        if not results or not results.results:
+            return await client.fast_edit(
+                message, "❌ **Gagal memicu Menu:** Tidak ada respon dari Bot Assistant.\nPastikan Mode Inline bot Anda sudah aktif di @BotFather."
+            )
+
         await client.send_inline_bot_result(
             chat_id=message.chat.id,
             query_id=results.query_id,
             result_id=results.results[0].id,
             reply_to_message_id=message.reply_to_message.id if message.reply_to_message else None
         )
+        await message.delete()
     except Exception as e:
         # Fallback jika asisten tidak bisa kirim pesan
         await client.fast_edit(message, f"❌ **Gagal memicu Menu:**\n`{str(e)}`")

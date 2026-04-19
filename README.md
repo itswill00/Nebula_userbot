@@ -8,7 +8,7 @@ A high-performance, modular Telegram Userbot built on the Hydrogram framework. N
 - **Asynchronous Architecture**: Fully non-blocking operations using `asyncio` and `uvloop`.
 - **Modular Plugin System**: Easily extendable with a structured plugin architecture.
 - **Integrated Assistant Bot**: Built-in support for an inline assistant bot for help menus and feedback.
-- **Dynamic Help Menu**: Interactive, paginated help menu with customizable banners.
+- **Dynamic Help Menu**: Interactive, paginated, and ultra-stable help menu with search and share capabilities.
 - **Local JSON Database**: Low-latency data persistence using an optimized in-memory cache system.
 - **Automated Tasks**: Integrated `APScheduler` for background tasks and maintenance.
 

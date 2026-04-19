@@ -30,7 +30,7 @@ if __name__ == "__main__":
             CallbackQueryHandler(
                 assistant_callback_handler,
                 filters.regex(
-                    r"^(cat_|all_|pdet_|utog_|back_|close_|change_|page_|afk_)")
+                    r"^(cat[|_]|all[|_]|pdet[|_]|utog[|_]|back[|_]|close[|_]|change[|_]|page[|_]|afk[|_])")
             )
         )
 

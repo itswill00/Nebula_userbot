@@ -50,9 +50,10 @@ async def run_wizard():
         await app.stop()
 
         print("\n" + "="*40)
+        print("\n" + "=" * 40)
         print("🎉 SETUP SELESAI!")
         print("Nebula kamu siap beraksi.")
-        print("="*40 + "\n")
+        print("=" * 40 + "\n")
 
     except Exception as e:
         print(f"\n❌ Login gagal: {str(e)}")
