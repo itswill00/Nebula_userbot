@@ -18,9 +18,9 @@ if __name__ == "__main__":
     if bot.assistant:
         bot.assistant.parent = bot
         
-        # 2. Handler untuk Callback Dashboard & Help (Pola hpage, hplug, htog, conf, close)
+        # 2. Handler untuk Callback Dashboard & Help (Pola cat, pdet, utog, back, close)
         bot.assistant.add_handler(
-            CallbackQueryHandler(assistant_callback_handler, filters.regex(r"^hpage_|^hplug_|^htog_|^conf_|^close_db$"))
+            CallbackQueryHandler(assistant_callback_handler, filters.regex(r"^cat_|^pdet_|^utog_|^back_to_main$|^close_db$"))
         )
         bot.assistant.add_handler(InlineQueryHandler(assistant_inline_handler))
 
