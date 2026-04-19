@@ -50,10 +50,7 @@ async def get_module_detail_markup(client_parent, category):
         lang = await client_parent.db.get("lang", "id")
         buttons.append([InlineKeyboardButton(f"Bahasa: {lang.upper()}", callback_data="toggle_lang_switch")])
 
-    # 2. Tambahkan daftar perintah yang tersedia di modul ini (seperti Ultroid help)
-    # help_text = "\n".join([f"• `.{cmd}`" for cmd in CMD_HELP[category].keys()])
-    
-    # 3. Tombol Navigasi
+    # 2. Tombol Navigasi
     buttons.append([InlineKeyboardButton("⬅️ Kembali", callback_data="back_to_modules")])
     
     return InlineKeyboardMarkup(buttons)
@@ -101,8 +98,9 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         # Buat teks bantuan ala Ultroid
         help_info = f"📦 **Modul:** `{category}`\n"
         help_info += "━━━━━━━━━━━━━━━━━━━━\n"
-        for cmd, info in CMD_HELP[category].items():
-            help_info += f"• `.{cmd}` : {info}\n"
+        if category in CMD_HELP:
+            for cmd, info in CMD_HELP[category].items():
+                help_info += f"• `.{cmd}` : {info}\n"
         
         await callback_query.edit_message_text(
             help_info, 
@@ -117,12 +115,10 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         if key == "lang_switch":
             current = await client.parent.db.get("lang", "id")
             await client.parent.db.set("lang", "en" if current == "id" else "id")
-            # Refresh detail modul System (asumsi kategori System)
             await callback_query.edit_message_reply_markup(reply_markup=await get_module_detail_markup(client.parent, "System"))
         else:
             current = await client.parent.db.get(key, False)
             await client.parent.db.set(key, not current)
-            # Karena toggle ini pasti di Security, refresh Security
             await callback_query.edit_message_reply_markup(reply_markup=await get_module_detail_markup(client.parent, "Security"))
 
     # C. LAIN-LAIN
@@ -132,3 +128,22 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
     
     elif data == "info_afk":
         await callback_query.answer("Status AFK hanya bisa diubah via perintah .afk", show_alert=True)
+
+# --- CONTACT BOT LOGIC ---
+async def assistant_contact_handler(client, message: Message):
+    """Menangani pesan dari orang asing ke Assistant Bot."""
+    me = client.parent.me
+    if message.from_user.id == me.id:
+        return
+
+    log_text = (
+        f"📩 **Pesan Baru di Assistant Bot**\n\n"
+        f"**Dari:** {message.from_user.mention} (`{message.from_user.id}`)\n"
+        f"**Pesan:** {message.text or '[Media]'}"
+    )
+    
+    try:
+        await client.parent.send_message("me", log_text)
+        await message.reply("✅ Pesan kamu telah diteruskan ke Bos saya.")
+    except Exception:
+        pass
