@@ -65,10 +65,10 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
             return await callback_query.answer(f"Total Plugin: {len(get_all_plugins())}", show_alert=True)
             
         page = int(data.split("_")[1])
-        await callback_query.edit_message_reply_markup(reply_markup=await get_help_markup(page))
         await callback_query.answer()
+        await callback_query.edit_message_reply_markup(reply_markup=await get_help_markup(page))
 
-    # 2. Detail Plugin (Saat tombol plugin diklik)
+    # 2. Detail Plugin
     elif data.startswith("hplug_"):
         await callback_query.answer()
         parts = data.split("_", 3)
@@ -79,8 +79,8 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         for cmd, info in commands.items():
             text += f"• `.{cmd}` : {info}\n"
         
-        # Tambahkan tombol kontrol jika diperlukan (seperti yang Anda minta)
         buttons = []
+        # Logic toggles tetap sama...
         if plug == "antispam":
             is_as = await client.parent.db.get("antispam", False)
             buttons.append([InlineKeyboardButton(f"Anti-Spam: {'✅' if is_as else '❌'}", callback_data=f"htog_antispam_{cat}_{plug}_{back_page}")])
