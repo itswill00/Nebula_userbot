@@ -178,6 +178,18 @@ class NebulaBot(Client):
         return self.strings.get(lang, {}).get(key, 
                self.strings.get("en", {}).get(key, key))
 
+    async def send_log(self, text: str):
+        """Kirim laporan aktivitas ke LOG_CHANNEL (Minimalist Style)."""
+        if not self.log_channel or not self.assistant:
+            return
+        try:
+            await self.assistant.send_message(
+                self.log_channel, 
+                f"📑 **Nebula Log**\n\n{text}"
+            )
+        except Exception as e:
+            LOGS.error(f"Failed to send log: {e}")
+
     async def send_card(self, chat_id, text, buttons=None, reply_to_message_id=None):
         """Kirim tampilan dengan banner visual (Bulletproof Engine)."""
         # 1. Cek File ID dari Cache (Paling Cepat & Stabil)
