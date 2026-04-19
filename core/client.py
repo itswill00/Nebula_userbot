@@ -5,6 +5,7 @@ import importlib
 from hydrogram import Client
 from dotenv import load_dotenv
 from core.database import LocalDB
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 load_dotenv()
 
@@ -18,10 +19,11 @@ class NebulaBot(Client):
             api_hash=os.getenv("API_HASH"),
             plugins=dict(root="plugins"),
             device_model="Nebula Master",
-            app_version="1.1.0"
+            app_version="1.2.0"
         )
         self.db = LocalDB()
         self.strings = {}
+        self.scheduler = AsyncIOScheduler()
         self._load_all_strings()
         
         self.assistant = None
@@ -49,10 +51,8 @@ class NebulaBot(Client):
         return self.strings.get(lang, self.strings.get("id", {})).get(key, default or key)
 
     async def reload_plugin(self, name):
-        """Me-reload modul plugin secara dinamis."""
         module_path = f"plugins.{name}"
         try:
-            # Cari module yang sudah ter-import
             module = importlib.import_module(module_path)
             importlib.reload(module)
             return True
@@ -62,12 +62,14 @@ class NebulaBot(Client):
 
     async def start(self):
         await super().start()
+        self.scheduler.start()
         if self.assistant:
             await self.assistant.start()
             logging.info("Assistant Online.")
-        logging.info("Nebula Core Online with Hot-Reload support.")
+        logging.info("Nebula Core Online with Scheduler Active.")
 
     async def stop(self, *args):
         await super().stop()
+        self.scheduler.shutdown()
         if self.assistant:
             await self.assistant.stop()
