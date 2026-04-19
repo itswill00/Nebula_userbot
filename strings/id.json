@@ -9,5 +9,9 @@
     "SET_VALUE_SUCCESS": "Pengaturan `{key}` telah diperbarui menjadi `{value}`.",
     "PM_GUARD_MSG": "🛡 **Nebula Keamanan PM**\n\nHalo! Anda belum disetujui. Pesan Anda akan diabaikan.",
     "REPLY_USER_OR_ID": "Balas ke user atau berikan ID.",
-    "PROCESSING": "`Memproses...`"
+    "PROCESSING": "`Memproses...`",
+    "DASHBOARD_TEXT": "🌌 **Pusat Kontrol Nebula**\n\nKelola pengaturan userbot dan keamanan Anda melalui dashboard interaktif ini.",
+    "CONTACT_MSG": "📩 **Pesan Baru dari:** {name} (`{id}`)\n\n**Teks:**\n{text}",
+    "CONTACT_SENT": "Pesan Anda telah diteruskan ke pemilik saya.",
+    "SETTING_TOGGLED": "Pengaturan `{key}` telah diubah menjadi `{value}`."
 }

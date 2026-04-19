@@ -9,5 +9,9 @@
     "SET_VALUE_SUCCESS": "Setting `{key}` has been updated to `{value}`.",
     "PM_GUARD_MSG": "🛡 **Nebula PM Security**\n\nHello! You haven't been approved yet. Your messages will be ignored.",
     "REPLY_USER_OR_ID": "Reply to a user or provide an ID.",
-    "PROCESSING": "`Processing...`"
+    "PROCESSING": "`Processing...`",
+    "DASHBOARD_TEXT": "🌌 **Nebula Control Center**\n\nManage your userbot settings and security from this interactive dashboard.",
+    "CONTACT_MSG": "📩 **New Message from:** {name} (`{id}`)\n\n**Text:**\n{text}",
+    "CONTACT_SENT": "Your message has been forwarded to my owner.",
+    "SETTING_TOGGLED": "Setting `{key}` has been changed to `{value}`."
 }
