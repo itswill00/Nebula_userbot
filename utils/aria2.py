@@ -1,5 +1,5 @@
 import aiohttp
-import json
+
 
 class Aria2RPC:
     def __init__(self, url="http://localhost:6800/jsonrpc"):

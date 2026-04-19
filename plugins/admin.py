@@ -4,14 +4,15 @@ from hydrogram.types import Message, ChatPermissions
 from hydrogram.errors import FloodWait
 from core.decorators import on_cmd
 
+
 @Client.on_message(on_cmd("purge", category="Admin", info="Hapus banyak pesan sekaligus (Balas ke pesan awal)."))
 async def purge_messages(client, message: Message):
     if not message.reply_to_message:
         return await client.fast_edit(message, "✦ Balas ke pesan awal sebagai batas hapus.")
-    
+
     chat_id = message.chat.id
     message_ids = range(message.reply_to_message.id, message.id)
-    
+
     await message.delete()
     count = 0
     try:
@@ -28,6 +29,7 @@ async def purge_messages(client, message: Message):
     await asyncio.sleep(3)
     await status.delete()
 
+
 @Client.on_message(on_cmd("ban", category="Admin", info="Blokir permanen user dari grup."))
 async def ban_user(client, message: Message):
     replied = message.reply_to_message
@@ -39,6 +41,7 @@ async def ban_user(client, message: Message):
         await client.fast_edit(message, f"🛡 **Tindakan Keras**\n\nUser `{user.first_name}` telah dibanned dari grup ini.")
     except Exception as e:
         await client.fast_edit(message, f"❌ **Gagal Ban:** `{str(e)}`")
+
 
 @Client.on_message(on_cmd("kick", category="Admin", info="Keluarkan user dari grup (Bisa masuk lagi)."))
 async def kick_user(client, message: Message):
@@ -53,6 +56,7 @@ async def kick_user(client, message: Message):
     except Exception as e:
         await client.fast_edit(message, f"❌ **Gagal Kick:** `{str(e)}`")
 
+
 @Client.on_message(on_cmd("mute", category="Admin", info="Bungkam user di grup."))
 async def mute_user(client, message: Message):
     replied = message.reply_to_message
@@ -65,6 +69,7 @@ async def mute_user(client, message: Message):
     except Exception as e:
         await client.fast_edit(message, f"❌ **Gagal Mute:** `{str(e)}`")
 
+
 @Client.on_message(on_cmd("pin", category="Admin", info="Sematkan pesan di grup."))
 async def pin_message(client, message: Message):
     replied = message.reply_to_message
@@ -75,6 +80,7 @@ async def pin_message(client, message: Message):
         await client.fast_edit(message, "📌 **Pesan berhasil disematkan!**")
     except Exception as e:
         await client.fast_edit(message, f"❌ **Gagal menyematkan pesan:** `{str(e)}`")
+
 
 @Client.on_message(on_cmd("unpin", category="Admin", info="Lepas sematan pesan di grup."))
 async def unpin_message(client, message: Message):
@@ -87,11 +93,12 @@ async def unpin_message(client, message: Message):
     except Exception as e:
         await client.fast_edit(message, f"❌ **Gagal melepas sematan:** `{str(e)}`")
 
+
 @Client.on_message(on_cmd("zombies", category="Admin", info="Bersihkan grup dari akun yang sudah dihapus (Deleted Accounts)."))
 async def clean_zombies(client, message: Message):
     if message.chat.type in ["private", "bot"]:
         return await client.fast_edit(message, "✦ Perintah ini cuma bisa dipakai di Grup/Channel.")
-    
+
     await client.fast_edit(message, "⏳ `Memindai anggota grup untuk mencari akun Zombie...`")
     zombies = 0
     async for member in client.get_chat_members(message.chat.id):
@@ -99,9 +106,9 @@ async def clean_zombies(client, message: Message):
             try:
                 await client.ban_chat_member(message.chat.id, member.user.id)
                 zombies += 1
-            except:
+            except Exception:
                 pass
-            
+
     if zombies > 0:
         await client.fast_edit(message, f"✅ **Operasi Bersih-bersih Selesai**\n\nBerhasil membasmi `{zombies}` akun Zombie.")
     else:

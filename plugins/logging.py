@@ -1,22 +1,24 @@
 from hydrogram import Client, filters
 from hydrogram.types import Message
 
+
 @Client.on_message(filters.all & ~filters.me, group=-1)
 async def cache_messages(client, message: Message):
     """Mencatat setiap pesan masuk ke memori untuk Anti-Delete."""
     if not message.chat or not message.id:
         return
-    
+
     chat_key = f"{message.chat.id}_{message.id}"
     client.db.msg_cache[chat_key] = {
         "text": message.text or message.caption or "[Media]",
         "from": message.from_user.first_name if message.from_user else "Seseorang",
         "chat": message.chat.title or "Private Chat"
     }
-    
+
     if len(client.db.msg_cache) > 2000:
         oldest = next(iter(client.db.msg_cache))
         del client.db.msg_cache[oldest]
+
 
 @Client.on_deleted_messages(group=-2)
 async def on_deleted(client, messages):
@@ -40,6 +42,7 @@ async def on_deleted(client, messages):
             await client.send_log(log_text)
             del client.db.msg_cache[chat_key]
 
+
 @Client.on_edited_message(filters.all & ~filters.me, group=-3)
 async def on_edited(client, message: Message):
     """Mendeteksi pesan yang diedit dan mengirim laporan ke LOG_CHANNEL."""
@@ -54,7 +57,7 @@ async def on_edited(client, message: Message):
     if chat_key in client.db.msg_cache:
         old_text = client.db.msg_cache[chat_key]['text']
         new_text = message.text or message.caption or "[Media]"
-        
+
         if old_text != new_text:
             log_text = (
                 "✏️ **Message Edited**\n"

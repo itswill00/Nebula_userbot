@@ -1,10 +1,10 @@
-import asyncio
 import aiohttp
 from hydrogram import Client, filters
 from hydrogram.types import Message
 from utils.shell import async_exec
 
 PREFIX = "."
+
 
 @Client.on_message(filters.command("speedtest", prefixes=PREFIX) & filters.me)
 async def run_speedtest(client, message: Message):
@@ -17,16 +17,17 @@ async def run_speedtest(client, message: Message):
     except Exception as e:
         await status.edit(f"**Speedtest Error:** `{str(e)}`")
 
+
 @Client.on_message(filters.command("ip", prefixes=PREFIX) & filters.me)
 async def track_ip(client, message: Message):
     """Mencari informasi IP atau lokasi server."""
     ip = "me"
     if len(message.command) > 1:
         ip = message.command[1]
-    
+
     status = await message.edit("`Melacak IP...`")
     url = f"http://ip-api.com/json/{'' if ip == 'me' else ip}"
-    
+
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             data = await resp.json()

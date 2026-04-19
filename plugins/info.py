@@ -2,13 +2,14 @@ from hydrogram import Client
 from hydrogram.types import Message
 from core.decorators import on_cmd
 
+
 @Client.on_message(on_cmd("info", category="Scraper", info="Ambil informasi lengkap user atau grup."))
 async def get_info(client, message: Message):
     status = await client.fast_edit(message, "⏳ `Mengambil data...`")
-    
+
     target = message.reply_to_message.from_user if message.reply_to_message else message.from_user
     chat = message.chat
-    
+
     # Jika membalas pesan user
     if target:
         info = (
@@ -28,8 +29,9 @@ async def get_info(client, message: Message):
             f"**Tipe:** `{chat.type}`\n"
             f"**Username:** `@{chat.username or '-'}`"
         )
-        
+
     await status.edit(info)
+
 
 @Client.on_message(on_cmd("id", category="Scraper", info="Cek ID chat atau user balasan secara instan."))
 async def get_id(client, message: Message):

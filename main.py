@@ -8,7 +8,8 @@ from plugins.assistant import assistant_contact_handler, assistant_callback_hand
 from plugins._inline import assistant_inline_handler
 
 # Bungkam peringatan versi Python dari Google agar terminal bersih
-warnings.filterwarnings("ignore", category=FutureWarning, module="google.api_core")
+warnings.filterwarnings("ignore", category=FutureWarning,
+                        module="google.api_core")
 
 if __name__ == "__main__":
     uvloop.install()
@@ -20,14 +21,16 @@ if __name__ == "__main__":
 
         # 1. Pesan Masuk (Contact Bot)
         bot.assistant.add_handler(
-            MessageHandler(assistant_contact_handler, filters.private & ~filters.bot)
+            MessageHandler(assistant_contact_handler,
+                           filters.private & ~filters.bot)
         )
 
         # 2. SEMUA Callback (Help, Dashboard, Toggles, Navigasi)
         bot.assistant.add_handler(
             CallbackQueryHandler(
                 assistant_callback_handler,
-                filters.regex(r"^(cat_|all_|pdet_|utog_|back_|close_|change_|page_|afk_)")
+                filters.regex(
+                    r"^(cat_|all_|pdet_|utog_|back_|close_|change_|page_|afk_)")
             )
         )
 

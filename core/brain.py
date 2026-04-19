@@ -1,10 +1,10 @@
 import time
-import asyncio
 from dataclasses import dataclass
 from typing import Callable
 from hydrogram import Client
 from hydrogram.types import Message
 from core.decorators import BRAIN_RULES
+
 
 class Intent:
     # Prioritas Intent (Angka kecil = Prioritas Tinggi)
@@ -14,11 +14,13 @@ class Intent:
     REPLY = 40         # Balas normal (AFK)
     PASS = 100         # Lewati
 
+
 @dataclass
 class Action:
     intent: int
     plugin_name: str
     execute: Callable
+
 
 class NebulaBrain:
     def __init__(self, client: Client):
@@ -43,7 +45,7 @@ class NebulaBrain:
         # Abaikan pesan dari diri sendiri (dikirim oleh userbot)
         if not message.from_user or message.from_user.is_self:
             return
-            
+
         ctx = await self.hydrate_context(message)
         actions = []
 
@@ -62,12 +64,12 @@ class NebulaBrain:
 
         # Arbitrase: Urutkan aksi berdasarkan prioritas
         actions.sort(key=lambda x: x.intent)
-        
+
         # Eksekusi aksi dengan prioritas tertinggi (hanya satu yang dieksekusi jika terjadi konflik mematikan)
         top_action = actions[0]
-        
+
         await top_action.execute()
-        
+
         # Jika tindakan membatasi alur komunikasi, hentikan propagasi (jangan trigger plugin lain)
         if top_action.intent in (Intent.BLOCK, Intent.MUTE, Intent.REPLY_BLOCK):
             message.stop_propagation()

@@ -1,11 +1,11 @@
 import time
-import os
 import psutil
 import platform
 from datetime import datetime
-from hydrogram import Client, filters
+from hydrogram import Client
 from hydrogram.types import Message
 from core.decorators import on_cmd
+
 
 def get_readable_time(seconds: int) -> str:
     count = 0
@@ -15,7 +15,8 @@ def get_readable_time(seconds: int) -> str:
 
     while count < 4:
         count += 1
-        remainder, result = divmod(seconds, 60) if count < 3 else divmod(seconds, 24)
+        remainder, result = divmod(
+            seconds, 60) if count < 3 else divmod(seconds, 24)
         if seconds == 0 and remainder == 0:
             break
         time_list.append(int(result))
@@ -31,12 +32,14 @@ def get_readable_time(seconds: int) -> str:
 
     return ping_time
 
+
 def get_size(bytes, suffix="B"):
     factor = 1024
     for unit in ["", "K", "M", "G", "T", "P"]:
         if bytes < factor:
             return f"{bytes:.2f}{unit}{suffix}"
         bytes /= factor
+
 
 @Client.on_message(on_cmd("ping", category="System", info="Cek latensi bot."))
 async def ping_cmd(client, message: Message):
@@ -47,23 +50,25 @@ async def ping_cmd(client, message: Message):
     uptime = get_readable_time(time.time() - client.start_time)
     await ex.edit(f"🚀 **Pong!**\n\n⏱️ **Latensi:** `{duration}ms`\n⏳ **Uptime:** `{uptime}`")
 
+
 @Client.on_message(on_cmd("uptime", category="System", info="Cek berapa lama bot berjalan."))
 async def uptime_cmd(client, message: Message):
     uptime = get_readable_time(time.time() - client.start_time)
     await client.fast_edit(message, f"🕒 **Nebula Uptime:** `{uptime}`")
+
 
 @Client.on_message(on_cmd("sysinfo", category="System", info="Informasi sistem lengkap."))
 async def sysinfo_cmd(client, message: Message):
     uname = platform.uname()
     boot_time_timestamp = psutil.boot_time()
     bt = datetime.fromtimestamp(boot_time_timestamp)
-    
+
     # CPU
     cpufreq = psutil.cpu_freq()
-    
+
     # Memory
     svmem = psutil.virtual_memory()
-    
+
     # Disk
     disk_usage = psutil.disk_usage('/')
 
@@ -79,12 +84,13 @@ async def sysinfo_cmd(client, message: Message):
     )
     await client.fast_edit(message, res)
 
+
 @Client.on_message(on_cmd("usage", category="System", info="Penggunaan sumber daya saat ini."))
 async def usage_cmd(client, message: Message):
     cpu_usage = psutil.cpu_percent(interval=1)
     ram_usage = psutil.virtual_memory().percent
     disk_usage = psutil.disk_usage('/').percent
-    
+
     res = (
         "📊 **Current Resource Usage**\n\n"
         f"**CPU:** `{cpu_usage}%`\n"

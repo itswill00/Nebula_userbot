@@ -15,7 +15,8 @@ async def catbox_upload(file_path):
         with open(file_path, "rb") as f:
             data = aiohttp.FormData()
             data.add_field("reqtype", "fileupload")
-            data.add_field("fileToUpload", f, filename=os.path.basename(file_path))
+            data.add_field("fileToUpload", f,
+                           filename=os.path.basename(file_path))
 
             async with session.post(url, data=data) as response:
                 if response.status == 200:

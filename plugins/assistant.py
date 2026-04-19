@@ -81,7 +81,8 @@ async def get_main_menu_markup():
     """Halaman Awal: Menu Utama Bergaya Ultroid."""
     buttons = [
         [
-            InlineKeyboardButton("🛠️ Utilities", callback_data="all_plugins_0"),
+            InlineKeyboardButton(
+                "🛠️ Utilities", callback_data="all_plugins_0"),
             InlineKeyboardButton("🛡️ Security", callback_data="cat_Security_0")
         ],
         [
@@ -89,7 +90,8 @@ async def get_main_menu_markup():
             InlineKeyboardButton("👤 Identity", callback_data="cat_Identity_0")
         ],
         [
-            InlineKeyboardButton("🖼️ Ganti Banner", callback_data="change_banner"),
+            InlineKeyboardButton(
+                "🖼️ Ganti Banner", callback_data="change_banner"),
             InlineKeyboardButton("🗑 Tutup Menu", callback_data="close_db")
         ]
     ]
@@ -140,7 +142,8 @@ async def get_plugin_grid_markup(category, page):
 
     buttons.append(nav)
     buttons.append([
-        InlineKeyboardButton("⬅️ Kembali ke Menu", callback_data="back_to_main")
+        InlineKeyboardButton("⬅️ Kembali ke Menu",
+                             callback_data="back_to_main")
     ])
     return InlineKeyboardMarkup(buttons)
 
@@ -188,7 +191,8 @@ async def get_plugin_detail_markup(
             f"utog_lang_switch_{category}_{plugin_name}_{back_page}_{back_cat}"
         )
         buttons.append([
-            InlineKeyboardButton(f"Bahasa: {lang.upper()}", callback_data=cb_data)
+            InlineKeyboardButton(
+                f"Bahasa: {lang.upper()}", callback_data=cb_data)
         ])
 
     back_callback = (
@@ -235,7 +239,8 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
                 "Silakan kirimkan sebuah **Foto** ke bot ini untuk dijadikan "
                 "banner baru.",
                 reply_markup=InlineKeyboardMarkup([[
-                    InlineKeyboardButton("⬅️ Batal", callback_data="back_to_main")
+                    InlineKeyboardButton(
+                        "⬅️ Batal", callback_data="back_to_main")
                 ]]),
                 disable_web_page_preview=False
             )

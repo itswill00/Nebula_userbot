@@ -3,6 +3,7 @@ from hydrogram import Client
 from hydrogram.types import Message
 from core.decorators import on_cmd
 
+
 @Client.on_message(on_cmd("paste", category="Utilitas", info="Upload teks/kode ke Nekobin."))
 async def paste_text(client, message: Message):
     text = ""
@@ -13,8 +14,8 @@ async def paste_text(client, message: Message):
     else:
         return await client.fast_edit(message, "✦ Berikan teks atau balas ke pesan teks.")
 
-    status = await client.fast_edit(message, "⏳ `Mengunggah ke Nekobin...`")
-    
+    await client.fast_edit(message, "⏳ `Mengunggah ke Nekobin...`")
+
     async with aiohttp.ClientSession() as session:
         async with session.post("https://nekobin.com/api/documents", json={"content": text}) as resp:
             if resp.status == 201:
@@ -22,8 +23,8 @@ async def paste_text(client, message: Message):
                 key = data["result"]["key"]
                 url = f"https://nekobin.com/{key}"
                 await client.fast_edit(
-                    message, 
-                    f"✅ **Teks Berhasil Diunggah!**\n\n🔗 [Buka Tautan Nekobin]({url})", 
+                    message,
+                    f"✅ **Teks Berhasil Diunggah!**\n\n🔗 [Buka Tautan Nekobin]({url})",
                     disable_web_page_preview=True
                 )
             else:

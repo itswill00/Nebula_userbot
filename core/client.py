@@ -2,7 +2,6 @@ import os
 import json
 import time
 import logging
-import importlib
 import asyncio
 from hydrogram import Client, filters
 from hydrogram.types import Message
@@ -18,7 +17,7 @@ load_dotenv()
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 logging.basicConfig(
-    level=logging.INFO, 
+    level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(os.path.join(ROOT_DIR, "nebula.log")),
@@ -31,18 +30,19 @@ LOGS = logging.getLogger("Nebula")
 logging.getLogger("hydrogram").setLevel(logging.ERROR)
 logging.getLogger("apscheduler").setLevel(logging.ERROR)
 
+
 class NebulaBot(Client):
     def __init__(self):
         # Tampilkan Banner dengan warna biru
         print("\033[94m" + r"""
-    _   __     __            __      
-   / | / /__  / /_  __  ____/ /___ _ 
-  /  |/ / _ \/ __ \/ / / / __  / __ `/ 
- / /|  /  __/ /_/ / /_/ / /_/ / /_/ /  
-/_/ |_/\___/_.___/\__,_/\__,_/\__,_/   
+    _   __     __            __
+   / | / /__  / /_  __  ____/ /___ _
+  /  |/ / _ \/ __ \/ / / / __  / __ `/
+ / /|  /  __/ /_/ / /_/ / /_/ / /_/ /
+/_/ |_/\___/_.___/\__,_/\__,_/\__,_/
         """ + "\033[0m")
         LOGS.info("🚀 Inisialisasi Nebula Engine...")
-        
+
         for folder in ["downloads", "strings", "plugins"]:
             target = os.path.join(ROOT_DIR, folder)
             if not os.path.exists(target):
@@ -60,23 +60,25 @@ class NebulaBot(Client):
         self.db = LocalDB(os.path.join(ROOT_DIR, "nebula_db.json"))
         # Load database ke memori agar respon tombol secepat kilat (0ms delay)
         asyncio.get_event_loop().run_until_complete(self.db.load_to_memory())
-        
+
         self.strings = {}
         self.cmd_help = CMD_HELP
         self.scheduler = AsyncIOScheduler()
         self.start_time = time.time()
-        
+
         # Inisialisasi The Brain (Arbiter System)
         self.brain = NebulaBrain(self)
         # Register The Brain at group -1 (Tertinggi) untuk mencegat semua pesan
-        self.add_handler(MessageHandler(self.brain.process_message, filters.all & ~filters.me), group=-1)
+        self.add_handler(MessageHandler(
+            self.brain.process_message, filters.all & ~filters.me), group=-1)
 
         self._load_all_strings()
-        
+
         # Log Channel Configuration
         log_id = os.getenv("LOG_CHANNEL")
-        self.log_channel = int(log_id) if log_id and (log_id.startswith("-100") or log_id.isdigit()) else "me"
-        
+        self.log_channel = int(log_id) if log_id and (
+            log_id.startswith("-100") or log_id.isdigit()) else "me"
+
         self.assistant = None
         bot_token = os.getenv("BOT_TOKEN")
         if bot_token:
@@ -92,7 +94,8 @@ class NebulaBot(Client):
 
     def _load_all_strings(self):
         string_path = os.path.join(ROOT_DIR, "strings")
-        if not os.path.exists(string_path): return
+        if not os.path.exists(string_path):
+            return
         for lang_file in os.listdir(string_path):
             if lang_file.endswith(".json"):
                 lang_code = lang_file.split(".")[0]
@@ -127,11 +130,10 @@ class NebulaBot(Client):
         await super().start()
         if not self.scheduler.running:
             self.scheduler.start()
-        
+
         # Kirim notifikasi bot hidup
         await self.send_log("🚀 **Nebula Engine v1.6.0 is Online!**\nAll systems functional.")
         LOGS.info("Nebula Engine 1.6.0 Active.")
-
 
     async def stop(self, *args):
         await super().stop()

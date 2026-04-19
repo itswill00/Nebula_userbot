@@ -5,6 +5,7 @@ from hydrogram import Client
 # Gunakan path absolut ke root proyek
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+
 async def run_wizard():
     print("\n" + "="*40)
     print("🌌  NEBULA USERBOT - SETUP WIZARD  🌌")
@@ -16,7 +17,8 @@ async def run_wizard():
     api_hash = input("2. Masukkan API_HASH: ").strip()
     bot_token = input("3. Masukkan BOT_TOKEN (Assistant): ").strip()
     gemini_key = input("4. Masukkan GEMINI_API_KEY: ").strip()
-    log_channel = input("5. Masukkan LOG_CHANNEL (ID/me, contoh: -100xxx): ").strip() or "me"
+    log_channel = input(
+        "5. Masukkan LOG_CHANNEL (ID/me, contoh: -100xxx): ").strip() or "me"
 
     # 2. Simpan ke .env di root
     env_path = os.path.join(ROOT_DIR, ".env")
@@ -31,7 +33,7 @@ async def run_wizard():
     # 3. Autentikasi Telegram (Login OTP)
     print("\n🔑 Sekarang kita login ke Telegram.")
     print("   Masukkan nomor HP dan kode yang dikirim ke aplikasi Telegram kamu.\n")
-    
+
     app = Client(
         "nebula",
         api_id=int(api_id),
@@ -46,12 +48,12 @@ async def run_wizard():
         me = await app.get_me()
         print(f"\n✅ Berhasil login sebagai: {me.first_name}")
         await app.stop()
-        
+
         print("\n" + "="*40)
         print("🎉 SETUP SELESAI!")
         print("Nebula kamu siap beraksi.")
         print("="*40 + "\n")
-        
+
     except Exception as e:
         print(f"\n❌ Login gagal: {str(e)}")
         session_path = os.path.join(ROOT_DIR, "nebula.session")

@@ -2,7 +2,7 @@ import os
 import time
 import asyncio
 import yt_dlp
-from hydrogram import Client, filters
+from hydrogram import Client
 from hydrogram.types import Message
 from core.decorators import on_cmd
 
@@ -11,18 +11,18 @@ DOWNLOAD_DIR = "downloads/"
 if not os.path.exists(DOWNLOAD_DIR):
     os.makedirs(DOWNLOAD_DIR)
 
+
 def progress_bar(current, total, status_msg, start_time):
     """Fungsi pembantu untuk menampilkan progress bar."""
     now = time.time()
     diff = now - start_time
     if diff < 1:
         return
-    
+
     percentage = current * 100 / total
     speed = current / diff
-    elapsed_time = round(diff) * 1000
     time_to_completion = round((total - current) / speed) * 1000
-    
+
     # Visual Progress Bar
     pro_bar = ""
     for i in range(10):
@@ -40,6 +40,7 @@ def progress_bar(current, total, status_msg, start_time):
     )
     return progress_str
 
+
 @Client.on_message(on_cmd("dl", category="Download", info="Download media dari YouTube, TikTok, dll."))
 async def universal_downloader(client, message: Message):
     if len(message.command) < 2:
@@ -47,7 +48,7 @@ async def universal_downloader(client, message: Message):
 
     url = message.command[1]
     status = await client.fast_edit(message, "🔍 **Menganalisis link...**")
-    
+
     # Opsi yt-dlp
     ydl_opts = {
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
@@ -61,9 +62,9 @@ async def universal_downloader(client, message: Message):
             info = ydl.extract_info(url, download=False)
             filename = ydl.prepare_filename(info)
             title = info.get('title', 'video')
-            
+
             await status.edit(f"📥 **Mendownload:**\n`{title}`")
-            
+
             # Proses Download Sebenarnya
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, lambda: ydl.download([url]))
@@ -72,7 +73,7 @@ async def universal_downloader(client, message: Message):
         if os.path.exists(filename):
             await status.edit("📤 **Mengirim ke Telegram...**")
             start_time = time.time()
-            
+
             await client.send_video(
                 chat_id=message.chat.id,
                 video=filename,
@@ -81,7 +82,7 @@ async def universal_downloader(client, message: Message):
                     status.edit(progress_bar(c, t, "Uploading", start_time))
                 ) if c % (1024 * 1024) == 0 else None
             )
-            
+
             await status.delete()
             os.remove(filename)
         else:
@@ -89,6 +90,7 @@ async def universal_downloader(client, message: Message):
 
     except Exception as e:
         await status.edit(f"❌ **Error:** `{str(e)}`")
+
 
 @Client.on_message(on_cmd("song", category="Download", info="Download audio/lagu dari YouTube/Spotify link."))
 async def song_downloader(client, message: Message):
@@ -114,11 +116,11 @@ async def song_downloader(client, message: Message):
             # Jika bukan URL, cari di YouTube
             if not query.startswith("http"):
                 query = f"ytsearch1:{query}"
-            
+
             info = ydl.extract_info(query, download=True)
             if 'entries' in info:
                 info = info['entries'][0]
-            
+
             title = info.get('title', 'audio')
             # Mencari file mp3 yang dihasilkan
             filename = ydl.prepare_filename(info).rsplit('.', 1)[0] + ".mp3"

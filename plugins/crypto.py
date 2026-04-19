@@ -3,6 +3,7 @@ from hydrogram import Client
 from hydrogram.types import Message
 from core.decorators import on_cmd
 
+
 @Client.on_message(on_cmd("crypto", category="Scraper", info="Cek harga crypto (Bitcoin, Ethereum, dll)."))
 async def crypto_price(client, message: Message):
     if len(message.command) < 2:
@@ -11,7 +12,7 @@ async def crypto_price(client, message: Message):
         coin = message.command[1].lower()
 
     await client.fast_edit(message, f"⏳ `Mencari harga {coin}...`")
-    
+
     url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=usd,idr"
     try:
         async with aiohttp.ClientSession() as session:

@@ -6,12 +6,13 @@ import logging
 
 LOGS = logging.getLogger("Nebula.DB")
 
+
 class LocalDB:
     def __init__(self, filename="nebula_db.json"):
         self.filename = filename
         self.lock = asyncio.Lock()
         self._cache = {}
-        self.msg_cache = {} 
+        self.msg_cache = {}
 
     async def load_to_memory(self):
         """Muat seluruh data dari file ke memori saat startup."""
@@ -20,7 +21,7 @@ class LocalDB:
                 self._cache = {}
                 await self._save_to_disk()
                 return
-            
+
             try:
                 async with aiofiles.open(self.filename, mode='r') as f:
                     content = await f.read()
