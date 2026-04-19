@@ -138,10 +138,22 @@ class NebulaBot(Client):
 
     @property
     def banner_url(self):
-        """Ambil URL banner (Zero Jargon Fallback)."""
+        """Ambil URL atau Path banner (Prioritas Lokal)."""
+        # 1. Cek folder lokal (Balanced Visuals)
+        banners_dir = os.path.join(ROOT_DIR, "resources", "banners")
+        if os.path.exists(banners_dir):
+            import random
+            banners = [os.path.join(banners_dir, f) for f in os.listdir(banners_dir) 
+                      if f.lower().endswith((".png", ".jpg", ".jpeg"))]
+            if banners:
+                return random.choice(banners)
+        
+        # 2. Fallback ke Environment Variable
         env_banner = os.getenv("BANNER")
         if env_banner:
             return env_banner
+            
+        # 3. Fallback terakhir (standard link)
         return "https://telegra.ph/file/0c976939988a8f6022ced.jpg"
 
     def _load_strings(self):
@@ -167,16 +179,50 @@ class NebulaBot(Client):
                self.strings.get("en", {}).get(key, key))
 
     async def send_card(self, chat_id, text, buttons=None, reply_to_message_id=None):
-        """Kirim tampilan dengan banner visual."""
+        """Kirim tampilan dengan banner visual (Bulletproof Engine)."""
+        # 1. Cek File ID dari Cache (Paling Cepat & Stabil)
+        cached_id = await self.db.get("banner_file_id")
+        
+        # Coba Kirim via Cache (Paling Stabil)
+        if cached_id:
+            try:
+                return await self.assistant.send_photo(
+                    chat_id,
+                    photo=cached_id,
+                    caption=text,
+                    reply_markup=buttons,
+                    reply_to_message_id=reply_to_message_id
+                )
+            except Exception as e:
+                LOGS.warning(f"Media Engine Cache Failed: {e}")
+
+        # 2. Ambil Source Banner (Lokal atau URL)
+        source = self.banner_url
+        
+        # Priority 2: Streaming Lokal atau URL
         try:
+            # Jika source adalah path file lokal, kirim sebagai stream biner
+            if os.path.exists(str(source)):
+                with open(source, "rb") as photo:
+                    return await self.assistant.send_photo(
+                        chat_id,
+                        photo=photo,
+                        caption=text,
+                        reply_markup=buttons,
+                        reply_to_message_id=reply_to_message_id
+                    )
+            
+            # Jika source adalah URL (Fallback ke Standard Telegraph)
             return await self.assistant.send_photo(
                 chat_id,
-                photo=self.banner_url,
+                photo=source,
                 caption=text,
                 reply_markup=buttons,
                 reply_to_message_id=reply_to_message_id
             )
-        except Exception:
+        except Exception as e:
+            LOGS.error(f"Media Engine Critical Failure: {e}")
+            # Priority 3: Safe Mode (Teks Murni)
             return await self.assistant.send_message(
                 chat_id,
                 text,
