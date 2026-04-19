@@ -41,7 +41,7 @@ class NebulaBot(Client):
  / /|  /  __/ /_/ / /_/ / /_/ / /_/ /
 /_/ |_/\___/_.___/\__,_/\__,_/\__,_/
         """ + "\033[0m")
-        LOGS.info("🚀 Inisialisasi Nebula Engine...")
+        LOGS.info("🚀 Inisialisasi Nebula...")
 
         for folder in ["downloads", "strings", "plugins"]:
             target = os.path.join(ROOT_DIR, folder)
@@ -132,8 +132,8 @@ class NebulaBot(Client):
             self.scheduler.start()
 
         # Kirim notifikasi bot hidup
-        await self.send_log("🚀 **Nebula Engine v1.6.0 is Online!**\nAll systems functional.")
-        LOGS.info("Nebula Engine 1.6.0 Active.")
+        await self.send_log("🚀 **Nebula v1.6.0 is Online!**\nAll systems functional.")
+        LOGS.info("Nebula 1.6.0 Active.")
 
     async def stop(self, *args):
         await super().stop()

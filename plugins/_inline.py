@@ -18,7 +18,7 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
     if not query or query == "help":
         # Menu Utama
         text = (
-            "🌌 **Nebula Engine - Help Menu**\n"
+            "🌌 **Nebula - Help Menu**\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
             "Pilih plugin di bawah ini untuk melihat detail perintah dan pengaturan.\n"
             "Gunakan tombol `«` dan `»` untuk beralih halaman."
@@ -27,7 +27,7 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
         results.append(
             InlineQueryResultArticle(
                 title="Nebula Help Menu",
-                description="Pusat Kendali & Bantuan Nebula Engine",
+                description="Pusat Kendali & Bantuan Nebula",
                 input_message_content=InputTextMessageContent(text),
                 reply_markup=markup
             )
@@ -63,7 +63,7 @@ async def assistant_inline_handler(client, inline_query: InlineQuery):
         results=results,
         cache_time=1,
         is_personal=True,
-        switch_pm_text="✨ Nebula Engine Help Center",
+        switch_pm_text="✨ Nebula Help Center",
         switch_pm_parameter="start"
     )
 

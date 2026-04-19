@@ -1,6 +1,6 @@
-# Nebula Engine v1.6.0
+# Nebula v1.6.0
 
-A high-performance, modular Telegram Userbot built on the Hydrogram framework. Nebula Engine is designed for efficiency, stability, and extensibility, providing a seamless automation experience with a focus on core performance.
+A high-performance, modular Telegram Userbot built on the Hydrogram framework. Nebula is designed for efficiency, stability, and extensibility, providing a seamless automation experience with a focus on core performance.
 
 ## Key Features
 
@@ -46,18 +46,18 @@ bash run.sh
 Once the bot is online, you can use the `.help` command to explore available modules.
 
 - `.help`: Triggers the interactive help menu via the Assistant Bot.
-- `.alive`: Checks the current status of the engine.
+- `.alive`: Checks the current status of the bot.
 
 ## Code Standards
 
-Nebula Engine adheres to high engineering standards:
+Nebula adheres to high technical standards:
 - **PEP 8 Compliance**: Code is linted and formatted for readability.
 - **Type Safety**: Explicit handling of types to ensure runtime stability.
 - **Zero Gimmick**: Focused on functional utility without unnecessary overhead.
 
 ## Credits & Acknowledgments
 
-Nebula Engine draws inspiration from several pioneering projects in the Telegram userbot ecosystem. Special thanks to:
+Nebula draws inspiration from several pioneering projects in the Telegram userbot ecosystem. Special thanks to:
 
 - [TeamUltroid/Ultroid](https://github.com/TeamUltroid/Ultroid): For the architectural inspiration and interactive menu concepts.
 - [UsergeTeam/Userge](https://github.com/UsergeTeam/Userge): For the foundation of core logic and modularity patterns.

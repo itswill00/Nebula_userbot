@@ -179,7 +179,7 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
         await callback_query.answer()
         try:
             await callback_query.edit_message_text(
-                "🌌 **Nebula Engine - Help Menu**\n"
+                "🌌 **Nebula - Help Menu**\n"
                 "Pilih kategori untuk menjelajahi plugin:",
                 reply_markup=await get_main_menu_markup(),
                 disable_web_page_preview=False

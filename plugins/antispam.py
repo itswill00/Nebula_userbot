@@ -69,4 +69,4 @@ async def toggle_antispam(client, message: Message):
 
     state = message.command[1].lower() == "on"
     await client.db.set("antispam", state)
-    await message.edit(f"🛡 **Anti-Spam Engine:** `{'ON' if state else 'OFF'}`")
+    await message.edit(f"🛡 **Anti-Spam System:** `{'ON' if state else 'OFF'}`")
