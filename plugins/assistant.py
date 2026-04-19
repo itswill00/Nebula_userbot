@@ -3,21 +3,18 @@ from hydrogram import Client, filters
 from hydrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from core.decorators import on_cmd
 
-# --- DASHBOARD UI GENERATOR ---
+# --- MENU GENERATORS ---
 
-async def get_dashboard_markup(client_parent):
-    """Fungsi pembantu untuk membuat markup dashboard terbaru."""
-    is_ad = await client_parent.db.get("anti_delete", True)
-    is_as = await client_parent.db.get("antispam", False)
-    lang = await client_parent.db.get("lang", "id")
-    
+async def get_main_menu_markup():
+    """Menu Utama Dashboard."""
     buttons = [
         [
-            InlineKeyboardButton(f"Anti-Delete: {'✅' if is_ad else '❌'}", callback_data="conf_anti_delete"),
-            InlineKeyboardButton(f"Anti-Spam: {'✅' if is_as else '❌'}", callback_data="conf_antispam")
+            InlineKeyboardButton("🛡️ Security", callback_data="menu_security"),
+            InlineKeyboardButton("👤 Identity", callback_data="menu_identity")
         ],
         [
-            InlineKeyboardButton(f"Bahasa: {lang.upper()}", callback_data="conf_lang_switch")
+            InlineKeyboardButton("🛠️ Tools", callback_data="menu_tools"),
+            InlineKeyboardButton("⚙️ Settings", callback_data="menu_settings")
         ],
         [
             InlineKeyboardButton("🗑 Tutup Dashboard", callback_data="close_db")
@@ -25,26 +22,56 @@ async def get_dashboard_markup(client_parent):
     ]
     return InlineKeyboardMarkup(buttons)
 
+async def get_security_menu_markup(client_parent):
+    """Sub-menu Keamanan."""
+    is_ad = await client_parent.db.get("anti_delete", True)
+    is_as = await client_parent.db.get("antispam", False)
+    is_pm = await client_parent.db.get("pm_permit_enabled", True)
+    
+    buttons = [
+        [InlineKeyboardButton(f"Anti-Delete: {'✅' if is_ad else '❌'}", callback_data="conf_anti_delete")],
+        [InlineKeyboardButton(f"Anti-Spam: {'✅' if is_as else '❌'}", callback_data="conf_antispam")],
+        [InlineKeyboardButton(f"PM Permit: {'✅' if is_pm else '❌'}", callback_data="conf_pm_permit_enabled")],
+        [InlineKeyboardButton("⬅️ Kembali", callback_data="menu_main")]
+    ]
+    return InlineKeyboardMarkup(buttons)
+
+async def get_identity_menu_markup(client_parent):
+    """Sub-menu Identitas."""
+    afk_data = await client_parent.db.get("afk", {"is_afk": False})
+    is_afk = afk_data.get("is_afk", False)
+    
+    buttons = [
+        [InlineKeyboardButton(f"Status AFK: {'Aktif 💤' if is_afk else 'Online ⚡'}", callback_data="info_afk")],
+        [InlineKeyboardButton("⬅️ Kembali", callback_data="menu_main")]
+    ]
+    return InlineKeyboardMarkup(buttons)
+
+async def get_settings_menu_markup(client_parent):
+    """Sub-menu Pengaturan Umum."""
+    lang = await client_parent.db.get("lang", "id")
+    
+    buttons = [
+        [InlineKeyboardButton(f"Bahasa: {lang.upper()}", callback_data="conf_lang_switch")],
+        [InlineKeyboardButton("⬅️ Kembali", callback_data="menu_main")]
+    ]
+    return InlineKeyboardMarkup(buttons)
+
 # --- COMMANDS ---
 
 @Client.on_message(on_cmd("db", category="Config", info="Pusat kontrol pengaturan fitur Nebula."))
 async def open_dashboard(client, message: Message):
-    """Membuka Dashboard Kontrol melalui Assistant Bot."""
     if not client.assistant:
         return await client.fast_edit(message, "✦ Bot Assistant kamu belum aktif nih.")
     
-    text = f"🛠 **Nebula Engine Dashboard**\n\nSelamat datang di pusat kendali Nebula. Gunakan tombol di bawah untuk mengatur fitur bot kamu."
-    reply_markup = await get_dashboard_markup(client)
+    text = "🛠 **Nebula Engine Dashboard**\n\nSilakan pilih kategori pengaturan yang ingin Anda kelola:"
+    markup = await get_main_menu_markup()
     
     try:
-        await client.assistant.send_message(
-            message.chat.id, 
-            text, 
-            reply_markup=reply_markup
-        )
+        await client.assistant.send_message(message.chat.id, text, reply_markup=markup)
         await message.delete()
     except Exception:
-        await client.fast_edit(message, f"{text}\n\n⚠️ **Catatan:** Coba `/start` di bot asisten kamu.")
+        await client.fast_edit(message, f"{text}\n\n⚠️ Gagal membuka dashboard via Assistant.")
 
 # --- CALLBACK HANDLERS ---
 
@@ -52,57 +79,50 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
     data = callback_query.data
     me = client.parent.me
     
-    # Keamanan: Hanya pemilik yang bisa klik
     if callback_query.from_user.id != me.id:
         return await callback_query.answer("🚫 Akses Ditolak.", show_alert=True)
 
-    # 1. Handling Konfigurasi (Toggle ON/OFF)
-    if data.startswith("conf_"):
+    # 1. Navigasi Menu
+    if data == "menu_main":
+        await callback_query.answer()
+        text = "🛠 **Nebula Engine Dashboard**\n\nSilakan pilih kategori pengaturan yang ingin Anda kelola:"
+        await callback_query.edit_message_text(text, reply_markup=await get_main_menu_markup())
+
+    elif data == "menu_security":
+        await callback_query.answer()
+        text = "🛡 **Security Settings**\nKelola proteksi dan keamanan akun Anda."
+        await callback_query.edit_message_text(text, reply_markup=await get_security_menu_markup(client.parent))
+
+    elif data == "menu_identity":
+        await callback_query.answer()
+        text = "👤 **Identity Settings**\nKelola profil dan status keberadaan Anda."
+        await callback_query.edit_message_text(text, reply_markup=await get_identity_menu_markup(client.parent))
+
+    elif data == "menu_settings":
+        await callback_query.answer()
+        text = "⚙️ **General Settings**\nAtur preferensi bahasa dan sistem bot."
+        await callback_query.edit_message_text(text, reply_markup=await get_settings_menu_markup(client.parent))
+
+    # 2. Logika Konfigurasi (Toggle)
+    elif data.startswith("conf_"):
+        await callback_query.answer("⚡ Mengupdate...")
         key = data.replace("conf_", "")
         
         if key == "lang_switch":
             current = await client.parent.db.get("lang", "id")
             new_val = "en" if current == "id" else "id"
             await client.parent.db.set("lang", new_val)
+            await callback_query.edit_message_reply_markup(reply_markup=await get_settings_menu_markup(client.parent))
         else:
-            current = await client.parent.db.get(key, (True if key == "anti_delete" else False))
-            new_val = not current
-            await client.parent.db.set(key, new_val)
-        
-        # Berikan feedback instan agar tidak hang
-        await callback_query.answer("✨ Perubahan Disimpan!")
-        
-        # Update tampilan UI
-        text = f"🛠 **Nebula Engine Dashboard**\n\nSelamat datang di pusat kendali Nebula. Gunakan tombol di bawah untuk mengatur fitur bot kamu."
-        markup = await get_dashboard_markup(client.parent)
-        await callback_query.edit_message_text(text, reply_markup=markup)
+            current = await client.parent.db.get(key, False)
+            await client.parent.db.set(key, not current)
+            # Kembali ke menu security karena sebagian besar toggle ada di sana
+            await callback_query.edit_message_reply_markup(reply_markup=await get_security_menu_markup(client.parent))
 
-    # 2. Handling Tutup Dashboard
+    # 3. Logika Penutupan
     elif data == "close_db":
-        await callback_query.answer("Menutup...")
-        try:
-            if callback_query.message:
-                await callback_query.message.delete()
-            elif callback_query.inline_message_id:
-                # Untuk pesan inline (jarang terjadi di DB tapi antisipasi)
-                await client.edit_message_text(inline_message_id=callback_query.inline_message_id, text="🗑 Dashboard ditutup.")
-        except Exception:
-            pass
-
-# --- CONTACT BOT LOGIC ---
-async def assistant_contact_handler(client, message: Message):
-    me = client.parent.me
-    if message.from_user.id == me.id:
-        return
-
-    log_text = (
-        f"📩 **Pesan Baru di Assistant Bot**\n\n"
-        f"**Dari:** {message.from_user.mention} (`{message.from_user.id}`)\n"
-        f"**Pesan:** {message.text or '[Media]'}"
-    )
+        await callback_query.answer("🗑 Menutup Dashboard.")
+        await callback_query.message.delete()
     
-    try:
-        await client.parent.send_message("me", log_text)
-        await message.reply("✅ Pesan kamu telah diteruskan ke Bos saya.")
-    except Exception:
-        pass
+    elif data == "info_afk":
+        await callback_query.answer("Gunakan perintah .afk untuk mengubah status.", show_alert=True)
