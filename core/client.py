@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import importlib
 from hydrogram import Client
 from dotenv import load_dotenv
 from core.database import LocalDB
@@ -17,13 +18,12 @@ class NebulaBot(Client):
             api_hash=os.getenv("API_HASH"),
             plugins=dict(root="plugins"),
             device_model="Nebula Master",
-            app_version="1.0.0"
+            app_version="1.1.0"
         )
         self.db = LocalDB()
         self.strings = {}
         self._load_all_strings()
         
-        # Inisialisasi Assistant jika BOT_TOKEN tersedia
         self.assistant = None
         bot_token = os.getenv("BOT_TOKEN")
         if bot_token:
@@ -32,10 +32,12 @@ class NebulaBot(Client):
                 api_id=int(os.getenv("API_ID")),
                 api_hash=os.getenv("API_HASH"),
                 bot_token=bot_token,
-                no_updates=False # Assistant butuh updates untuk callback tombol
+                no_updates=False
             )
 
     def _load_all_strings(self):
+        if not os.path.exists("strings"):
+            os.makedirs("strings")
         for lang_file in os.listdir("strings"):
             if lang_file.endswith(".json"):
                 lang_code = lang_file.split(".")[0]
@@ -44,17 +46,28 @@ class NebulaBot(Client):
 
     async def get_string(self, key, default=None):
         lang = await self.db.get("lang", "id")
-        return self.strings.get(lang, self.strings["id"]).get(key, default or key)
+        return self.strings.get(lang, self.strings.get("id", {})).get(key, default or key)
+
+    async def reload_plugin(self, name):
+        """Me-reload modul plugin secara dinamis."""
+        module_path = f"plugins.{name}"
+        try:
+            # Cari module yang sudah ter-import
+            module = importlib.import_module(module_path)
+            importlib.reload(module)
+            return True
+        except Exception as e:
+            logging.error(f"Error reloading {name}: {e}")
+            return False
 
     async def start(self):
         await super().start()
         if self.assistant:
             await self.assistant.start()
-            logging.info("Nebula Assistant (Bot) is online.")
-        logging.info("Nebula Master (User) is online.")
+            logging.info("Assistant Online.")
+        logging.info("Nebula Core Online with Hot-Reload support.")
 
     async def stop(self, *args):
         await super().stop()
         if self.assistant:
             await self.assistant.stop()
-        logging.info("Nebula Engine gracefully terminated.")
