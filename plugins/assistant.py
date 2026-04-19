@@ -11,13 +11,13 @@ async def open_dashboard(client, message: Message):
     if not client.assistant:
         return await client.fast_edit(message, "✦ Bot Assistant kamu belum aktif nih.")
     
-    text = await client.get_string("DASHBOARD_TEXT")
-    
     # Ambil status saat ini
     is_ad = await client.db.get("anti_delete", True)
     is_as = await client.db.get("antispam", False)
     lang = await client.db.get("lang", "id")
 
+    text = f"🛠 **Nebula Engine Dashboard**\n\nSelamat datang di pusat kendali Nebula. Gunakan tombol di bawah untuk mengatur fitur bot kamu."
+    
     buttons = [
         [
             InlineKeyboardButton(f"Anti-Delete: {'✅' if is_ad else '❌'}", callback_data="conf_anti_delete"),
@@ -32,6 +32,7 @@ async def open_dashboard(client, message: Message):
     ]
     
     try:
+        # Kirim pesan via Assistant
         await client.assistant.send_message(
             message.chat.id, 
             text, 
@@ -39,30 +40,32 @@ async def open_dashboard(client, message: Message):
         )
         await message.delete()
     except Exception:
-        # Fallback jika Bot tidak ada di chat
-        await client.fast_edit(message, f"{text}\n\n⚠️ **Tombol nggak muncul.** Coba `/start` dulu di bot asisten kamu atau masukin dia ke grup ini.")
+        # Fallback jika Bot tidak ada di chat atau gagal delete
+        await client.fast_edit(message, f"{text}\n\n⚠️ **Catatan:** Coba `/start` dulu di bot asisten kamu atau pastikan dia admin di grup ini.")
 
 # Handler untuk Assistant Bot (CallbackQuery)
 async def assistant_callback_handler(client, callback_query: CallbackQuery):
     data = callback_query.data
-    user_me = await client.parent.get_me()
+    # OPTIMASI: Gunakan client.parent.me (cached) daripada await get_me()
+    me = client.parent.me
     
-    if callback_query.from_user.id != user_me.id:
-        return await callback_query.answer("Akses Ditolak.", show_alert=True)
+    if callback_query.from_user.id != me.id:
+        return await callback_query.answer("🚫 Akses Ditolak: Hanya pemilik akun yang bisa mengontrol.", show_alert=True)
 
     if data.startswith("conf_"):
         key = data.replace("conf_", "")
         
+        # Logika switch bahasa atau boolean
         if key == "lang_switch":
             current = await client.parent.db.get("lang", "id")
             new_val = "en" if current == "id" else "id"
             await client.parent.db.set("lang", new_val)
         else:
-            current = await client.parent.db.get(key, True)
+            current = await client.parent.db.get(key, (True if key == "anti_delete" else False))
             new_val = not current
             await client.parent.db.set(key, new_val)
         
-        # Refresh Dashboard
+        # Refresh Dashboard dengan data terbaru
         is_ad = await client.parent.db.get("anti_delete", True)
         is_as = await client.parent.db.get("antispam", False)
         lang = await client.parent.db.get("lang", "id")
@@ -80,27 +83,39 @@ async def assistant_callback_handler(client, callback_query: CallbackQuery):
             ]
         ]
         
-        text = await client.parent.get_string("DASHBOARD_TEXT")
-        await callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(buttons))
-        await callback_query.answer("Pengaturan diperbarui!")
+        text = f"🛠 **Nebula Engine Dashboard**\n\nSelamat datang di pusat kendali Nebula. Gunakan tombol di bawah untuk mengatur fitur bot kamu."
+        
+        try:
+            await callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(buttons))
+            await callback_query.answer("✨ Pengaturan diperbarui!")
+        except Exception:
+            await callback_query.answer("⚠️ Gagal memperbarui tampilan.")
 
     elif data == "close_db":
-        await callback_query.message.delete()
+        # PERBAIKAN: Gunakan delete_messages() yang lebih aman jika message is None
+        try:
+            if callback_query.message:
+                await callback_query.message.delete()
+            else:
+                await client.delete_messages(callback_query.message.chat.id, callback_query.message.id)
+        except Exception:
+            await callback_query.answer("Pesan sudah dihapus atau tidak ditemukan.")
 
 # --- CONTACT BOT LOGIC ---
 async def assistant_contact_handler(client, message: Message):
-    master = await client.parent.get_me()
-    if message.from_user.id == master.id:
+    me = client.parent.me
+    if message.from_user.id == me.id:
         return
 
-    text = await client.parent.get_string("CONTACT_MSG")
-    await client.parent.send_message(
-        "me",
-        text.format(
-            name=message.from_user.first_name,
-            id=message.from_user.id,
-            text=message.text or "[Media]"
-        )
+    # Kirim notifikasi ke Saved Messages (me)
+    log_text = (
+        f"📩 **Pesan Baru di Assistant Bot**\n\n"
+        f"**Dari:** {message.from_user.mention} (`{message.from_user.id}`)\n"
+        f"**Pesan:** {message.text or '[Media]'}"
     )
-    sent_text = await client.parent.get_string("CONTACT_SENT")
-    await message.reply(sent_text)
+    
+    try:
+        await client.parent.send_message("me", log_text)
+        await message.reply("✅ Pesan kamu telah diteruskan ke Bos saya. Silakan tunggu balasan beliau.")
+    except Exception:
+        pass
