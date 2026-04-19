@@ -41,13 +41,22 @@ if ! python3 core/wizard.py; then
     exit 1
 fi
 
-# Buat run.sh
+# Buat run.sh dengan logika penghentian total yang aman
 cat <<EOF > run.sh
 #!/bin/bash
-aria2c --enable-rpc --rpc-listen-all=false --rpc-listen-port=6800 --max-connection-per-server=10 --rpc-max-request-size=100M --daemon
+trap "echo -e '\n🛑 \033[91mNebula Bot Berhenti Total.\033[0m'; exit" SIGINT
+
+if ! pgrep -x \"aria2c\" > /dev/null; then
+    aria2c --enable-rpc --rpc-listen-all=false --rpc-listen-port=6800 --max-connection-per-server=10 --rpc-max-request-size=100M --daemon
+fi
+
 while true; do
     python3 main.py
-    echo "Bot stopped/restarting in 5 seconds..."
+    if [ \$? -eq 0 ]; then
+        echo -e "✅ \033[92mBot berhenti secara normal.\033[0m"
+        break
+    fi
+    echo -e "⚠️  \033[93mBot crash/berhenti. Restarting dalam 5 detik...\033[0m"
     sleep 5
 done
 EOF
